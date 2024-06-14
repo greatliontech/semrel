@@ -28,8 +28,6 @@ type Config struct {
 	NoChangeTypes []string `yaml:"noChangeTypes"`
 	// The default bump if no changes are found
 	DefaultBump string `yaml:"defaultBump"`
-	// Whether the commit type is case sensitive
-	CaseSensitive bool `yaml:"caseSensitive"`
 }
 
 // ParseConfig parses a YAML config file into a Config struct
