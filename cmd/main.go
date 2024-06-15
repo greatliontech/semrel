@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/thegrumpylion/semrel/internal/cmd"
 )
 
 func main() {
@@ -32,24 +32,18 @@ func main() {
 		return
 	}
 
-	// get the HEAD reference
-	hd, err := r.Head()
+	// create cli
+	cli, err := cmd.New(r)
 	if err != nil {
-		slog.Error("could not get HEAD reference", "error", err)
+		slog.Error("could not create CLI", "error", err)
 		return
 	}
 
-	// get the commit log iterator
-	citr, err := r.Log(&git.LogOptions{From: hd.Hash()})
-	if err != nil {
-		slog.Error("could not get commit log", "error", err)
+	// run the CLI
+	if err := cli.Execute(); err != nil {
+		slog.Error("could not execute CLI", "error", err)
 		return
 	}
-
-	err = citr.ForEach(func(c *object.Commit) error {
-		slog.Info("commit", "hash", c.Hash, "message", c.Message)
-		return nil
-	})
 }
 
 // findGitDir recursively searches for a .git directory upwards from the current directory
