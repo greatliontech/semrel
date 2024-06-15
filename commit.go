@@ -6,21 +6,47 @@ import (
 	"strings"
 )
 
-type Commit struct {
-	Type        string
-	Scope       string
-	Attention   bool
-	Description string
-	Body        string
-	Footers     map[string]string
-}
-
 var (
 	ErrNotConventionalCommit = errors.New("not a conventional commit message")
 
-	commitPattern = regexp.MustCompile(`^([\w-]+)(?:\(([^\)]*)\))?(!*)\: (.*)$`)
-	footerPattern = regexp.MustCompile(`^([\w-]+): (.*)$`)
+	commitPattern   = regexp.MustCompile(`^([\w-]+)(?:\(([^\)]*)\))?(!*)\: (.*)$`)
+	footerPattern   = regexp.MustCompile(`^([\w-]+): (.*)$`)
+	breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
 )
+
+type Commit struct {
+	Footers     map[string]string
+	Type        string
+	Scope       string
+	Description string
+	Body        string
+	Attention   bool
+}
+
+func (c *Commit) BumpKind(cfg *Config) BumpKind {
+	mtch := func(typ string, typs []string) bool {
+		for _, t := range typs {
+			if strings.EqualFold(t, typ) {
+				return true
+			}
+		}
+		return false
+	}
+
+	if c.Attention || breakingPattern.MatchString(c.Body) {
+		return BumpMajor
+	}
+	if mtch(c.Type, cfg.MajorTypes) {
+		return BumpMajor
+	}
+	if mtch(c.Type, cfg.MinorTypes) {
+		return BumpMinor
+	}
+	if mtch(c.Type, cfg.PatchTypes) {
+		return BumpPatch
+	}
+	return BumpNone
+}
 
 func ParseCommitMessage(message string) (*Commit, error) {
 	lines := strings.Split(message, "\n")

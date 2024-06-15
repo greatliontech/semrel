@@ -15,15 +15,12 @@ minorTypes:
   - minor
 majorTypes:
   - breaking
-noChangeTypes:
-  - docs
 `
 
 func TestConfigFileTypes(t *testing.T) {
 	expectedPatchTypes := []string{"fix", "chore"}
 	expectedMinorTypes := []string{"feat", "minor"}
 	expectedMajorTypes := []string{"breaking"}
-	expectedNoChangeTypes := []string{"docs"}
 
 	c, err := ParseConfig([]byte(typesString))
 	if err != nil {
@@ -38,9 +35,6 @@ func TestConfigFileTypes(t *testing.T) {
 	}
 	if !expectedTypesMatch(expectedMajorTypes, c.MajorTypes) {
 		t.Errorf("expected %v, got %v", expectedMajorTypes, c.MajorTypes)
-	}
-	if !expectedTypesMatch(expectedNoChangeTypes, c.NoChangeTypes) {
-		t.Errorf("expected %v, got %v", expectedNoChangeTypes, c.NoChangeTypes)
 	}
 }
 
@@ -84,7 +78,6 @@ func TestConfigFromFile(t *testing.T) {
 	expectedPatchTypes := []string{"fix", "chore"}
 	expectedMinorTypes := []string{"feat", "minor"}
 	expectedMajorTypes := []string{"breaking"}
-	expectedNoChangeTypes := []string{"docs"}
 	if !expectedTypesMatch(expectedPatchTypes, c.PatchTypes) {
 		t.Errorf("expected %v, got %v", expectedPatchTypes, c.PatchTypes)
 	}
@@ -93,9 +86,6 @@ func TestConfigFromFile(t *testing.T) {
 	}
 	if !expectedTypesMatch(expectedMajorTypes, c.MajorTypes) {
 		t.Errorf("expected %v, got %v", expectedMajorTypes, c.MajorTypes)
-	}
-	if !expectedTypesMatch(expectedNoChangeTypes, c.NoChangeTypes) {
-		t.Errorf("expected %v, got %v", expectedNoChangeTypes, c.NoChangeTypes)
 	}
 }
 
