@@ -44,8 +44,8 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	// get latest tag version
 	ver, ref, err := getLatestTagVersion(r.repo)
 	if err != nil {
-		if err != errNoTags {
-			fmt.Println("v0.0.1")
+		if err == errNoTags {
+			fmt.Println("0.0.1")
 			return nil
 		}
 		return err
