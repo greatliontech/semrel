@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -70,12 +71,25 @@ func (b BumpKind) Index() int {
 type Config struct {
 	// The commit types that are considered as no change
 	DefaultBump BumpKind `yaml:"defaultBump"`
+
 	// The commit types that are considered as patch
 	PatchTypes []string `yaml:"patchTypes"`
+
 	// The commit types that are considered as minor
 	MinorTypes []string `yaml:"minorTypes"`
+
 	// The commit types that are considered as major
 	MajorTypes []string `yaml:"majorTypes"`
+
+	// Initial version. If not provided, the version will be 0.0.1
+	InitialVersion string `yaml:"initialVersion"`
+
+	initialVersion *semver.Version
+}
+
+// InitialVersionSemver returns the initial version as a semver.Version
+func (c *Config) InitialVersionSemver() *semver.Version {
+	return c.initialVersion
 }
 
 // ParseConfig parses a YAML config file into a Config struct
@@ -98,6 +112,14 @@ func ParseConfig(b []byte) (*Config, error) {
 	if c.MinorTypes == nil {
 		c.MinorTypes = []string{"feat"}
 	}
+	if c.InitialVersion == "" {
+		c.InitialVersion = "0.0.1"
+	}
+	sv, err := semver.NewVersion(c.InitialVersion)
+	if err != nil {
+		return nil, err
+	}
+	c.initialVersion = sv
 	return c, nil
 }
 

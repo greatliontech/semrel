@@ -17,11 +17,13 @@ import (
 type rootCommand struct {
 	cmd  *cobra.Command
 	repo *git.Repository
+	cfg  *semrel.Config
 }
 
-func New(repo *git.Repository) (*rootCommand, error) {
+func New(repo *git.Repository, cfg *semrel.Config) (*rootCommand, error) {
 	r := &rootCommand{
 		repo: repo,
+		cfg:  cfg,
 	}
 	cmd := &cobra.Command{
 		Use:  "semrel",

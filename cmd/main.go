@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/thegrumpylion/semrel"
 	"github.com/thegrumpylion/semrel/internal/cmd"
 )
 
@@ -32,8 +33,19 @@ func main() {
 		return
 	}
 
+	// get config
+	cfg, err := semrel.ParseConfigFile(filepath.Join(filepath.Dir(gitDir), ".semrel"))
+	if err != nil {
+		if !os.IsNotExist(err) {
+			slog.Error("could not parse config file", "error", err)
+			return
+		}
+		slog.Debug("config file not found, using default config")
+		cfg = semrel.DefaultConfig
+	}
+
 	// create cli
-	cli, err := cmd.New(r)
+	cli, err := cmd.New(r, cfg)
 	if err != nil {
 		slog.Error("could not create CLI", "error", err)
 		return
