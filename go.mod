@@ -1,4 +1,4 @@
-module github.com/thegrumpylion/semrel
+module github.com/greatliontech/semrel
 
 go 1.22.4
 
