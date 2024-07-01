@@ -31,6 +31,7 @@ func New(repo *git.Repository, cfg *semrel.Config) (*rootCommand, error) {
 	}
 	cmd.AddCommand(
 		newTagsCommand(repo).cmd,
+		newCurrentCommand(repo).cmd,
 	)
 	r.cmd = cmd
 	return r, nil
