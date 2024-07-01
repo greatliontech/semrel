@@ -3,11 +3,13 @@ package repo
 import (
 	"errors"
 	"log/slog"
+	"sort"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/greatliontech/semrel"
+	"github.com/greatliontech/semrel/pkg/semrel"
 )
 
 type Repo struct {
@@ -48,4 +50,35 @@ func (r *Repo) Commits(from, to plumbing.Hash) ([]*semrel.Commit, error) {
 	}
 
 	return commits, nil
+}
+
+type versionReference struct {
+	ver *semver.Version
+	ref *plumbing.Reference
+}
+
+func (r *Repo) CurrentVersion() (*semver.Version, *plumbing.Reference, error) {
+	errNoTags := errors.New("no tags found")
+	// get the tag iterator
+	titr, err := r.repo.Tags()
+	if err != nil {
+		return nil, nil, err
+	}
+	versions := []versionReference{}
+	err = titr.ForEach(func(ref *plumbing.Reference) error {
+		ver, err := semver.NewVersion(ref.Name().Short())
+		if err == nil {
+			versions = append(versions, versionReference{ver: ver, ref: ref})
+		}
+		return nil
+	})
+	sort.Slice(versions, func(i, j int) bool {
+		v1 := versions[i].ver
+		v2 := versions[j].ver
+		return v2.LessThan(v1)
+	})
+	if len(versions) == 0 {
+		return nil, nil, errNoTags
+	}
+	return versions[0].ver, versions[0].ref, nil
 }

@@ -4,13 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"sort"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/greatliontech/semrel"
+	"github.com/greatliontech/semrel/internal/repo"
+	"github.com/greatliontech/semrel/pkg/semrel"
 	"github.com/spf13/cobra"
 )
 
@@ -20,25 +22,37 @@ type rootCommand struct {
 	cfg  *semrel.Config
 }
 
-func New(repo *git.Repository, cfg *semrel.Config) (*rootCommand, error) {
-	r := &rootCommand{
-		repo: repo,
+func New(r *git.Repository, cfg *semrel.Config) (*rootCommand, error) {
+	c := &rootCommand{
+		repo: r,
 		cfg:  cfg,
 	}
 	cmd := &cobra.Command{
-		Use:  "semrel",
-		RunE: r.runE,
+		Use:           "semrel",
+		RunE:          c.runE,
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+	rp := repo.New(r)
 	cmd.AddCommand(
-		newTagsCommand(repo).cmd,
-		newCurrentCommand(repo).cmd,
+		newTagsCommand(r).cmd,
+		newCurrentCommand(r).cmd,
+		newCompareCommand(rp).cmd,
+		newValidateCommand().cmd,
 	)
-	r.cmd = cmd
-	return r, nil
+	c.cmd = cmd
+	return c, nil
 }
 
-func (r *rootCommand) Execute() error {
-	return r.cmd.Execute()
+func (r *rootCommand) Execute() {
+	err := r.cmd.Execute()
+	if err != nil {
+		if err != errCompareFailed {
+			slog.Error("command failed", "error", err)
+		}
+		os.Exit(1)
+	}
+	os.Exit(0)
 }
 
 func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {

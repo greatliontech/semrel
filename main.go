@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/greatliontech/semrel"
 	"github.com/greatliontech/semrel/internal/cmd"
+	"github.com/greatliontech/semrel/pkg/semrel"
 )
 
 func main() {
@@ -52,10 +52,7 @@ func main() {
 	}
 
 	// run the CLI
-	if err := cli.Execute(); err != nil {
-		slog.Error("could not execute CLI", "error", err)
-		return
-	}
+	cli.Execute()
 }
 
 // findGitDir recursively searches for a .git directory upwards from the current directory
