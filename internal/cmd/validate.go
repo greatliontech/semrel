@@ -9,6 +9,7 @@ import (
 
 type validateCommand struct {
 	cmd          *cobra.Command
+	strict       bool
 	noPreRelease bool
 	noBuild      bool
 }
@@ -21,6 +22,7 @@ func newValidateCommand() *validateCommand {
 		RunE:  c.runE,
 		Args:  cobra.ExactArgs(1),
 	}
+	c.cmd.Flags().BoolVar(&c.strict, "strict", false, "strict semver validation")
 	c.cmd.Flags().BoolVar(&c.noPreRelease, "noPrerelease", false, "do not allow pre-release versions")
 	c.cmd.Flags().BoolVar(&c.noBuild, "noBuild", false, "do not allow build metadata")
 	return c
@@ -30,7 +32,13 @@ var errInvalidVersion = errors.New("invalid version")
 
 func (c *validateCommand) runE(cmd *cobra.Command, args []string) error {
 	vs := args[0]
-	sv, err := semver.NewVersion(vs)
+	var sv *semver.Version
+	var err error
+	if c.strict {
+		sv, err = semver.StrictNewVersion(vs)
+	} else {
+		sv, err = semver.NewVersion(vs)
+	}
 	if err != nil {
 		return err
 	}
