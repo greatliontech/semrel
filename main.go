@@ -33,8 +33,10 @@ func main() {
 		return
 	}
 
+	var cfg *semrel.Config
+
 	// get config
-	cfg, err := semrel.ParseConfigFile(filepath.Join(filepath.Dir(gitDir), ".semrel"))
+	cfgFile, err := semrel.ConfigFileFromPath(filepath.Join(filepath.Dir(gitDir), ".semrel"))
 	if err != nil {
 		if !os.IsNotExist(err) {
 			slog.Error("could not parse config file", "error", err)
@@ -42,6 +44,12 @@ func main() {
 		}
 		slog.Debug("config file not found, using default config")
 		cfg = semrel.DefaultConfig
+	} else {
+		cfg, err = semrel.NewConfigFromConfigFile(cfgFile)
+		if err != nil {
+			slog.Error("could not create config from config file", "error", err)
+			return
+		}
 	}
 
 	// create cli

@@ -24,28 +24,10 @@ type Commit struct {
 }
 
 func (c *Commit) BumpKind(cfg *Config) BumpKind {
-	mtch := func(typ string, typs []string) bool {
-		for _, t := range typs {
-			if strings.EqualFold(t, typ) {
-				return true
-			}
-		}
-		return false
-	}
-
 	if c.Attention || breakingPattern.MatchString(c.Body) {
 		return BumpMajor
 	}
-	if mtch(c.Type, cfg.MajorTypes) {
-		return BumpMajor
-	}
-	if mtch(c.Type, cfg.MinorTypes) {
-		return BumpMinor
-	}
-	if mtch(c.Type, cfg.PatchTypes) {
-		return BumpPatch
-	}
-	return BumpNone
+	return cfg.BumpKind(c.Type)
 }
 
 func ParseCommitMessage(message string) (*Commit, error) {

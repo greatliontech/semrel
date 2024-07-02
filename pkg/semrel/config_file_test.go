@@ -22,7 +22,7 @@ func TestConfigFileTypes(t *testing.T) {
 	expectedMinorTypes := []string{"feat", "minor"}
 	expectedMajorTypes := []string{"breaking"}
 
-	c, err := ParseConfig([]byte(typesString))
+	c, err := ConfigFileFromBytes([]byte(typesString))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,11 +42,11 @@ func TestMinorDefaultBump(t *testing.T) {
 	s := `
 defaultBump: minor
 `
-	c, err := ParseConfig([]byte(s))
+	c, err := ConfigFileFromBytes([]byte(s))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.DefaultBump != BumpMinor {
+	if c.DefaultBump != BumpMinor.String() {
 		t.Errorf("expected %s, got %s", BumpMinor, c.DefaultBump)
 	}
 }
@@ -58,7 +58,7 @@ patchTypes:
 	- chore
 `
 
-	_, err := ParseConfig([]byte(s))
+	_, err := ConfigFileFromBytes([]byte(s))
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
@@ -71,7 +71,7 @@ func TestConfigFromFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c, err := ParseConfigFile(cf)
+	c, err := ConfigFileFromPath(cf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,19 +90,9 @@ func TestConfigFromFile(t *testing.T) {
 }
 
 func TestInvalidFilePath(t *testing.T) {
-	_, err := ParseConfigFile("invalid/file/path")
+	_, err := ConfigFileFromPath("invalid/file/path")
 	if err == nil {
 		t.Error("expected error, got nil")
-	}
-}
-
-func TestInvalidDefaultBump(t *testing.T) {
-	s := `
-defaultBump: invalid
-`
-	_, err := ParseConfig([]byte(s))
-	if err != ErrInvalidDefaultBump {
-		t.Errorf("expected %v, got %v", ErrInvalidDefaultBump, err)
 	}
 }
 

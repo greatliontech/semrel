@@ -4,20 +4,20 @@ import (
 	"errors"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/greatliontech/semrel/internal/repo"
+	"github.com/greatliontech/semrel/internal/repository"
 	"github.com/spf13/cobra"
 )
 
 type compareCommand struct {
 	cmd  *cobra.Command
-	repo *repo.Repo
+	repo *repository.Repo
 	le   []string
 	ge   []string
 	lt   []string
 	gt   []string
 }
 
-func newCompareCommand(repo *repo.Repo) *compareCommand {
+func newCompareCommand(repo *repository.Repo) *compareCommand {
 	c := &compareCommand{
 		repo: repo,
 	}

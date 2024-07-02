@@ -1,16 +1,18 @@
 package cmd
 
 import (
-	"github.com/go-git/go-git/v5"
+	"fmt"
+
+	"github.com/greatliontech/semrel/internal/repository"
 	"github.com/spf13/cobra"
 )
 
 type currentCommand struct {
 	cmd  *cobra.Command
-	repo *git.Repository
+	repo *repository.Repo
 }
 
-func newCurrentCommand(repo *git.Repository) *currentCommand {
+func newCurrentCommand(repo *repository.Repo) *currentCommand {
 	c := &currentCommand{
 		repo: repo,
 	}
@@ -23,11 +25,10 @@ func newCurrentCommand(repo *git.Repository) *currentCommand {
 }
 
 func (c *currentCommand) runE(cmd *cobra.Command, args []string) error {
-	// get the HEAD reference
-	hd, err := c.repo.Head()
+	cv, _, err := c.repo.CurrentVersion()
 	if err != nil {
 		return err
 	}
-	cmd.Println(hd.Hash().String())
+	fmt.Println(cv.String())
 	return nil
 }

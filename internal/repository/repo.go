@@ -1,4 +1,4 @@
-package repo
+package repository
 
 import (
 	"errors"
@@ -57,8 +57,9 @@ type versionReference struct {
 	ref *plumbing.Reference
 }
 
+var ErrNoTags = errors.New("no tags found")
+
 func (r *Repo) CurrentVersion() (*semver.Version, *plumbing.Reference, error) {
-	errNoTags := errors.New("no tags found")
 	// get the tag iterator
 	titr, err := r.repo.Tags()
 	if err != nil {
@@ -78,7 +79,7 @@ func (r *Repo) CurrentVersion() (*semver.Version, *plumbing.Reference, error) {
 		return v2.LessThan(v1)
 	})
 	if len(versions) == 0 {
-		return nil, nil, errNoTags
+		return nil, nil, ErrNoTags
 	}
 	return versions[0].ver, versions[0].ref, nil
 }

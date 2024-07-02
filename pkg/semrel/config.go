@@ -2,132 +2,141 @@ package semrel
 
 import (
 	"errors"
-	"os"
-	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"gopkg.in/yaml.v3"
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
-var ErrInvalidDefaultBump = errors.New("invalid default bump")
+type ConfigOption func(*Config)
 
 var DefaultConfig = &Config{
-	DefaultBump: BumpNone,
-	PatchTypes:  []string{"fix"},
-	MinorTypes:  []string{"feat"},
+	defaultBump:    BumpNone,
+	patchTypes:     mapset.NewSet("fix"),
+	minorTypes:     mapset.NewSet("feat"),
+	majorTypes:     mapset.NewSet[string](),
+	initialVersion: semver.New(1, 0, 0, "", ""),
 }
 
-type BumpKind string
-
-const (
-	BumpNone  BumpKind = "none"
-	BumpPatch BumpKind = "patch"
-	BumpMinor BumpKind = "minor"
-	BumpMajor BumpKind = "major"
-)
-
-func (b BumpKind) String() string {
-	return string(b)
-}
-
-func (b BumpKind) IsValid() bool {
-	if b == BumpNone || b == BumpPatch || b == BumpMinor || b == BumpMajor {
-		return true
+func WithDefaultBump(b BumpKind) ConfigOption {
+	return func(c *Config) {
+		c.defaultBump = b
 	}
-	return false
 }
 
-func (b BumpKind) IsNone() bool {
-	return b == BumpNone
+func WithPatchTypes(types ...string) ConfigOption {
+	return func(c *Config) {
+		c.patchTypes = mapset.NewSet(types...)
+	}
 }
 
-func (b BumpKind) IsPatch() bool {
-	return b == BumpPatch
+func WithMinorTypes(types ...string) ConfigOption {
+	return func(c *Config) {
+		c.minorTypes = mapset.NewSet(types...)
+	}
 }
 
-func (b BumpKind) IsMinor() bool {
-	return b == BumpMinor
+func WithMajorTypes(types ...string) ConfigOption {
+	return func(c *Config) {
+		c.majorTypes = mapset.NewSet(types...)
+	}
 }
 
-func (b BumpKind) IsMajor() bool {
-	return b == BumpMajor
+func WithInitialVersion(v *semver.Version) ConfigOption {
+	return func(c *Config) {
+		c.initialVersion = v
+	}
 }
 
-func (b BumpKind) Index() int {
-	switch b {
-	case BumpNone:
-		return 0
-	case BumpPatch:
-		return 1
-	case BumpMinor:
-		return 2
-	case BumpMajor:
-		return 3
-	default:
-		return -1
+func WithDevelopment() ConfigOption {
+	return func(c *Config) {
+		c.development = true
 	}
 }
 
 type Config struct {
-	// The commit types that are considered as no change
-	DefaultBump BumpKind `yaml:"defaultBump"`
-
-	// The commit types that are considered as patch
-	PatchTypes []string `yaml:"patchTypes"`
-
-	// The commit types that are considered as minor
-	MinorTypes []string `yaml:"minorTypes"`
-
-	// The commit types that are considered as major
-	MajorTypes []string `yaml:"majorTypes"`
-
-	// Initial version. If not provided, the version will be 0.0.1
-	InitialVersion string `yaml:"initialVersion"`
-
+	defaultBump    BumpKind
+	patchTypes     mapset.Set[string]
+	minorTypes     mapset.Set[string]
+	majorTypes     mapset.Set[string]
 	initialVersion *semver.Version
+	development    bool
 }
 
-// InitialVersionSemver returns the initial version as a semver.Version
-func (c *Config) InitialVersionSemver() *semver.Version {
+func (c *Config) DefaultBump() BumpKind {
+	return c.defaultBump
+}
+
+func (c *Config) BumpKind(str string) BumpKind {
+	if c.patchTypes.Contains(str) {
+		return BumpPatch
+	}
+	if c.minorTypes.Contains(str) {
+		return BumpMinor
+	}
+	if c.majorTypes.Contains(str) {
+		return BumpMajor
+	}
+	return BumpNone
+}
+
+func (c *Config) InitialVersion() *semver.Version {
 	return c.initialVersion
 }
 
-// ParseConfig parses a YAML config file into a Config struct
-func ParseConfig(b []byte) (*Config, error) {
+func NewConfig(opts ...ConfigOption) (*Config, error) {
 	c := &Config{}
-	err := yaml.Unmarshal(b, c)
-	if err != nil {
-		return nil, err
+	for _, opt := range opts {
+		opt(c)
 	}
-	if c.DefaultBump == "" {
-		c.DefaultBump = BumpNone
+	if c.patchTypes.ContainsAny(c.minorTypes.ToSlice()...) ||
+		c.patchTypes.ContainsAny(c.majorTypes.ToSlice()...) ||
+		c.minorTypes.ContainsAny(c.majorTypes.ToSlice()...) {
+		return nil, errors.New("commit types overlap")
 	}
-	c.DefaultBump = BumpKind(strings.ToLower(c.DefaultBump.String()))
-	if !c.DefaultBump.IsValid() {
-		return nil, ErrInvalidDefaultBump
+	if c.initialVersion == nil {
+		if c.development {
+			c.initialVersion = semver.New(0, 1, 0, "", "")
+		} else {
+			c.initialVersion = semver.New(1, 0, 0, "", "")
+		}
 	}
-	if c.PatchTypes == nil {
-		c.PatchTypes = []string{"fix"}
-	}
-	if c.MinorTypes == nil {
-		c.MinorTypes = []string{"feat"}
-	}
-	if c.InitialVersion == "" {
-		c.InitialVersion = "0.0.1"
-	}
-	sv, err := semver.NewVersion(c.InitialVersion)
-	if err != nil {
-		return nil, err
-	}
-	c.initialVersion = sv
 	return c, nil
 }
 
-// ParseConfigFile parses a YAML config file into a Config struct
-func ParseConfigFile(path string) (*Config, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
+func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
+	opts := []ConfigOption{}
+
+	if defBump := cf.DefaultBump; defBump != "" {
+		bump, err := NewBump(defBump)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, WithDefaultBump(bump))
 	}
-	return ParseConfig(b)
+
+	if len(cf.PatchTypes) > 0 {
+		opts = append(opts, WithPatchTypes(cf.PatchTypes...))
+	}
+
+	if len(cf.MinorTypes) > 0 {
+		opts = append(opts, WithMinorTypes(cf.MinorTypes...))
+	}
+
+	if len(cf.MajorTypes) > 0 {
+		opts = append(opts, WithMajorTypes(cf.MajorTypes...))
+	}
+
+	if cf.InitialVersion != "" {
+		v, err := semver.NewVersion(cf.InitialVersion)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, WithInitialVersion(v))
+	}
+
+	if cf.Development {
+		opts = append(opts, WithDevelopment())
+	}
+
+	return NewConfig(opts...)
 }

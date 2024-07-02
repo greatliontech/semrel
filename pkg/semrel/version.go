@@ -6,23 +6,23 @@ func NextVersion(current *semver.Version, commits []*Commit, cfg *Config) semver
 	currentBump := BumpNone
 	for _, c := range commits {
 		b := c.BumpKind(cfg)
-		if b.Index() > currentBump.Index() {
+		if b.IsGreater(currentBump) {
 			currentBump = b
 		}
-		if currentBump.IsMajor() {
+		if currentBump == BumpMajor {
 			break
 		}
 	}
-	if currentBump.IsNone() {
-		currentBump = cfg.DefaultBump
+	if currentBump == BumpNone {
+		currentBump = cfg.DefaultBump()
 	}
-	if currentBump.IsMajor() {
+	if currentBump == BumpMajor {
 		return current.IncMajor()
 	}
-	if currentBump.IsMinor() {
+	if currentBump == BumpMinor {
 		return current.IncMinor()
 	}
-	if currentBump.IsPatch() {
+	if currentBump == BumpPatch {
 		return current.IncPatch()
 	}
 	return *current
