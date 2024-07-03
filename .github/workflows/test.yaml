@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  semrel:
+    runs-on: ubuntu-latest
+    name: Semantic Release
+    steps:
+      - uses: actions/checkout@v4
+      - id: semrel
+        uses: thegrumpylion/semrel-action@main
+      - run: echo next-ver = $NEXT_VERSION
+        shell: bash
+        env:
+          NEXT_VERSION: ${{ steps.semrel.outputs.next-version }}

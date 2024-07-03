@@ -17,8 +17,9 @@ func newCurrentCommand(repo *repository.Repo) *currentCommand {
 		repo: repo,
 	}
 	cmd := &cobra.Command{
-		Use:  "current",
-		RunE: c.runE,
+		Use:   "current",
+		Short: "Print the current release version",
+		RunE:  c.runE,
 	}
 	c.cmd = cmd
 	return c

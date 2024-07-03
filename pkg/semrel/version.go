@@ -17,6 +17,11 @@ func NextVersion(current *semver.Version, commits []*Commit, cfg *Config) semver
 		currentBump = cfg.DefaultBump()
 	}
 	if currentBump == BumpMajor {
+		if cfg.IsDevelopment() {
+			if current.Major() == 0 {
+				return current.IncPatch()
+			}
+		}
 		return current.IncMajor()
 	}
 	if currentBump == BumpMinor {

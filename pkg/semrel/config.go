@@ -15,6 +15,7 @@ var DefaultConfig = &Config{
 	minorTypes:     mapset.NewSet("feat"),
 	majorTypes:     mapset.NewSet[string](),
 	initialVersion: semver.New(1, 0, 0, "", ""),
+	devMajorBump:   BumpPatch,
 }
 
 func WithDefaultBump(b BumpKind) ConfigOption {
@@ -53,6 +54,12 @@ func WithDevelopment() ConfigOption {
 	}
 }
 
+func WithDevelopmentMajorBump(b BumpKind) ConfigOption {
+	return func(c *Config) {
+		c.devMajorBump = b
+	}
+}
+
 type Config struct {
 	defaultBump    BumpKind
 	patchTypes     mapset.Set[string]
@@ -60,6 +67,7 @@ type Config struct {
 	majorTypes     mapset.Set[string]
 	initialVersion *semver.Version
 	development    bool
+	devMajorBump   BumpKind
 }
 
 func (c *Config) DefaultBump() BumpKind {
@@ -83,8 +91,16 @@ func (c *Config) InitialVersion() *semver.Version {
 	return c.initialVersion
 }
 
+func (c *Config) IsDevelopment() bool {
+	return c.development
+}
+
 func NewConfig(opts ...ConfigOption) (*Config, error) {
-	c := &Config{}
+	c := &Config{
+		patchTypes: mapset.NewSet[string](),
+		minorTypes: mapset.NewSet[string](),
+		majorTypes: mapset.NewSet[string](),
+	}
 	for _, opt := range opts {
 		opt(c)
 	}
