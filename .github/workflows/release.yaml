@@ -20,13 +20,17 @@ jobs:
       - id: semrel
         uses: greatliontech/semrel-action@main
 
-      - name: Create Tag
-        run: |
-          git tag ${{ steps.semrel.outputs.next-version }}
-          git push origin ${{ steps.semrel.outputs.next-version }}
-
       - name: Set up Go
         uses: actions/setup-go@v5
+
+      - name: Create Tag
+        run: |
+          if [ "${{ steps.semrel.outputs.next-version }}" == "${{ steps.semrel.outputs.current-version }}" ]; then
+            echo "No new version to release"
+            exit 0
+          fi
+          git tag ${{ steps.semrel.outputs.next-version }}
+          git push origin ${{ steps.semrel.outputs.next-version }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
