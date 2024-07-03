@@ -11,6 +11,8 @@ import (
 	"github.com/greatliontech/semrel/pkg/semrel"
 )
 
+var version = "0.0.0-dev"
+
 func main() {
 	// Get the current directory
 	currentDir, err := os.Getwd()
@@ -53,7 +55,7 @@ func main() {
 	}
 
 	// create cli
-	cli, err := cmd.New(r, cfg)
+	cli, err := cmd.New(r, cfg, version)
 	if err != nil {
 		slog.Error("could not create CLI", "error", err)
 		return

@@ -18,7 +18,7 @@ type rootCommand struct {
 	cfg  *semrel.Config
 }
 
-func New(r *git.Repository, cfg *semrel.Config) (*rootCommand, error) {
+func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error) {
 	rp := repository.New(r)
 	c := &rootCommand{
 		repo: rp,
@@ -29,6 +29,7 @@ func New(r *git.Repository, cfg *semrel.Config) (*rootCommand, error) {
 		RunE:          c.runE,
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		Version:       ver,
 	}
 	cmd.AddCommand(
 		newCurrentCommand(rp).cmd,
@@ -64,10 +65,6 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	commits, err := r.repo.Commits(plumbing.ZeroHash, ref.Hash())
 	if err != nil {
 		return err
-	}
-
-	if len(commits) == 0 {
-		fmt.Println(ver.String())
 	}
 
 	next := semrel.NextVersion(ver, commits, r.cfg)
