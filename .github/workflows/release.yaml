@@ -2,8 +2,8 @@ name: goreleaser
 
 on:
   push:
-    tags:
-      - "*"
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - id: semrel
-        uses: thegrumpylion/semrel-action@main
+        uses: greatliontech/semrel-action@main
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -36,3 +36,5 @@ jobs:
           AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
           FURY_TOKEN: ${{ secrets.FURY_TOKEN }}
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+          GORELEASER_CURRENT_TAG: ${{ steps.semrel.outputs.next-version }}
+          GORELEASER_PREVIOUS_TAG: ${{ steps.semrel.outputs.current-version }}
