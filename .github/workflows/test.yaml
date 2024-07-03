@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - main
+      - wf
   workflow_dispatch:
 
 jobs:
@@ -10,9 +10,14 @@ jobs:
     name: Semantic Release
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: semrel
         uses: thegrumpylion/semrel-action@main
-      - run: echo next-ver = $NEXT_VERSION
+      - run: |
+          echo next-ver = $NEXT_VERSION
+          semrel -v
+          git tag
         shell: bash
         env:
           NEXT_VERSION: ${{ steps.semrel.outputs.next-version }}
