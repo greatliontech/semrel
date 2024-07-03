@@ -10,10 +10,7 @@ version: 2
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
-    - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
+    - ./scripts/completions.sh {{ .ProjectName }}
 
 builds:
   - env:
@@ -37,6 +34,8 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+    files:
+      - completions/*
 
 changelog:
   sort: asc
@@ -44,3 +43,66 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+dockers:
+  - image_templates:
+      ["ghcr.io/greatliontech/{{ .ProjectName }}:v{{ .Version }}"]
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/greatliontech/{{ .ProjectName }}
+      - --label=org.opencontainers.image.source=https://github.com/greatliontech/{{ .ProjectName }}
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=Apache-2.0
+
+brews:
+  - name: "{{ .ProjectName }}"
+    repository:
+      owner: greatliontech
+      name: homebrew-tap
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    download_strategy: CurlDownloadStrategy
+    commit_author:
+      name: greatbot
+      email: bot@greatlion.tech
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: "https://github.com/greatliontech/{{ .ProjectName }}"
+    description: "Semantic Versioning and Conventional Commits release utility"
+    license: "Apache-2.0"
+    install: |
+      bin.install "{{ .ProjectName }}"
+      bash_completion.install "completions/{{ .ProjectName }}.bash" => "{{ .ProjectName }}"
+      zsh_completion.install "completions/{{ .ProjectName }}.zsh" => "_{{ .ProjectName }}"
+      fish_completion.install "completions/{{ .ProjectName }}.fish"
+
+aurs:
+  - name: "{{ .ProjectName }}-bin"
+    homepage: "https://github.com/greatliontech/{{ .ProjectName }}"
+    description: "Semantic Versioning and Conventional Commits release utility"
+    license: "Apache-2.0"
+    private_key: "{{ .Env.AUR_SSH_KEY }}"
+    maintainers:
+      - "Nikolas Sepos <nikolas@greatlion.tech>"
+    git_url: "ssh://aur@aur.archlinux.org/{{ .ProjectName }}-bin.git"
+    provides:
+      - "{{ .ProjectName }}"
+    conflicts:
+      - "{{ .ProjectName }}"
+    package: |-
+      # bin
+      install -Dm755 "./{{ .ProjectName }}" "${pkgdir}/usr/bin/{{ .ProjectName }}"
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/{{ .ProjectName }}/LICENSE"
+      # completions
+      mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+      mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+      mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+      install -Dm644 "./completions/{{ .ProjectName }}.bash" "${pkgdir}/usr/share/bash-completion/completions/{{ .ProjectName }}"
+      install -Dm644 "./completions/{{ .ProjectName }}.zsh" "${pkgdir}/usr/share/zsh/site-functions/_{{ .ProjectName }}"
+      install -Dm644 "./completions/{{ .ProjectName }}.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/{{ .ProjectName }}.fish"
+    commit_author:
+      name: greatbot
+      email: bot@greatlion.tech
