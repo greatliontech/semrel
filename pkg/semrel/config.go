@@ -165,5 +165,9 @@ func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 		opts = append(opts, WithDevelopment())
 	}
 
+	if cf.Prefix != "" {
+		opts = append(opts, WithPrefix(cf.Prefix))
+	}
+
 	return NewConfig(opts...)
 }

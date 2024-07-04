@@ -9,12 +9,13 @@ import (
 )
 
 type compareCommand struct {
-	cmd  *cobra.Command
-	repo *repository.Repo
-	le   []string
-	ge   []string
-	lt   []string
-	gt   []string
+	cmd               *cobra.Command
+	repo              *repository.Repo
+	le                []string
+	ge                []string
+	lt                []string
+	gt                []string
+	currentBranchOnly bool
 }
 
 func newCompareCommand(repo *repository.Repo) *compareCommand {
@@ -31,6 +32,7 @@ func newCompareCommand(repo *repository.Repo) *compareCommand {
 	cmd.Flags().StringSliceVarP(&c.ge, "ge", "", nil, "greater than or equal to")
 	cmd.Flags().StringSliceVarP(&c.lt, "lt", "", nil, "less than")
 	cmd.Flags().StringSliceVarP(&c.gt, "gt", "", nil, "greater than")
+	cmd.Flags().BoolVarP(&c.currentBranchOnly, "current-branch-only", "", false, "only compare the current branch")
 	c.cmd = cmd
 	return c
 }
@@ -41,7 +43,7 @@ func (c *compareCommand) runE(cmd *cobra.Command, args []string) error {
 	var current *semver.Version
 	var err error
 	if len(args) == 0 {
-		current, _, err = c.repo.CurrentVersion()
+		current, _, err = c.repo.CurrentVersion(c.currentBranchOnly)
 	} else {
 		current, err = semver.NewVersion(args[0])
 	}
