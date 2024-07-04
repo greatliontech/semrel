@@ -60,14 +60,21 @@ func WithDevelopmentMajorBump(b BumpKind) ConfigOption {
 	}
 }
 
+func WithPrefix(prefix string) ConfigOption {
+	return func(c *Config) {
+		c.prefix = prefix
+	}
+}
+
 type Config struct {
-	defaultBump    BumpKind
 	patchTypes     mapset.Set[string]
 	minorTypes     mapset.Set[string]
 	majorTypes     mapset.Set[string]
 	initialVersion *semver.Version
-	development    bool
+	prefix         string
+	defaultBump    BumpKind
 	devMajorBump   BumpKind
+	development    bool
 }
 
 func (c *Config) DefaultBump() BumpKind {
@@ -93,6 +100,10 @@ func (c *Config) InitialVersion() *semver.Version {
 
 func (c *Config) IsDevelopment() bool {
 	return c.development
+}
+
+func (c *Config) Prefix() string {
+	return c.prefix
 }
 
 func NewConfig(opts ...ConfigOption) (*Config, error) {

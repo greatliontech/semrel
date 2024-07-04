@@ -2,11 +2,13 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"sort"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/greatliontech/semrel/pkg/semrel"
@@ -18,6 +20,14 @@ type Repo struct {
 
 func New(repo *git.Repository) *Repo {
 	return &Repo{repo: repo}
+}
+
+func (r *Repo) Head() (plumbing.Hash, error) {
+	ref, err := r.repo.Head()
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+	return ref.Hash(), nil
 }
 
 func (r *Repo) Commits(from, to plumbing.Hash) ([]*semrel.Commit, error) {
@@ -82,4 +92,26 @@ func (r *Repo) CurrentVersion() (*semver.Version, *plumbing.Reference, error) {
 		return nil, nil, ErrNoTags
 	}
 	return versions[0].ver, versions[0].ref, nil
+}
+
+func (r *Repo) CreateTag(tag string, commit plumbing.Hash, push bool) error {
+	_, err := r.repo.CreateTag(tag, commit, nil)
+	if err != nil {
+		return err
+	}
+
+	if push {
+
+		refSpecStr := fmt.Sprintf("refs/tags/%s:refs/tags/%s", tag, tag)
+		refSpec := config.RefSpec(refSpecStr)
+
+		return r.repo.Push(&git.PushOptions{
+			RemoteName: "origin",
+			RefSpecs: []config.RefSpec{
+				refSpec,
+			},
+		})
+	}
+
+	return err
 }

@@ -13,9 +13,11 @@ import (
 )
 
 type rootCommand struct {
-	cmd  *cobra.Command
-	repo *repository.Repo
-	cfg  *semrel.Config
+	cmd       *cobra.Command
+	repo      *repository.Repo
+	cfg       *semrel.Config
+	createTag bool
+	pushTag   bool
 }
 
 func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error) {
@@ -31,6 +33,8 @@ func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error
 		SilenceUsage:  true,
 		Version:       ver,
 	}
+	cmd.Flags().BoolVarP(&c.createTag, "create-tag", "", false, "create the tag")
+	cmd.Flags().BoolVarP(&c.pushTag, "push-tag", "", false, "push the tag")
 	cmd.AddCommand(
 		newCurrentCommand(rp).cmd,
 		newCompareCommand(rp).cmd,
@@ -69,7 +73,20 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 
 	next := semrel.NextVersion(ver, commits, r.cfg)
 
-	fmt.Println(next.String())
+	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
+
+	if r.createTag {
+		head, err := r.repo.Head()
+		if err != nil {
+			return err
+		}
+		err = r.repo.CreateTag(nextTag, head, r.pushTag)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println(nextTag)
 
 	return nil
 }

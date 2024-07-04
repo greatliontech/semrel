@@ -25,6 +25,9 @@ type ConfigFile struct {
 
 	// Development if true, sets the initial version to 0.1.0 and treats breaking changes as minor bumps
 	Development bool `yaml:"development"`
+
+	// Prefix is the prefix for the versions
+	Prefix string `yaml:"prefix"`
 }
 
 func ConfigFileFromPath(path string) (*ConfigFile, error) {
