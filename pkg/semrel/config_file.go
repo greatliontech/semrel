@@ -28,6 +28,12 @@ type ConfigFile struct {
 
 	// Prefix is the prefix for the versions
 	Prefix string `yaml:"prefix"`
+
+	// CreateTag if true, creates the next version tag
+	CreateTag bool `yaml:"createTag"`
+
+	// PushTag if true, pushes the next version tag. Requires CreateTag to be true
+	PushTag bool `yaml:"pushTag"`
 }
 
 func ConfigFileFromPath(path string) (*ConfigFile, error) {

@@ -80,10 +80,14 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	next := semrel.NextVersion(ver, commits, r.cfg)
-
 	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
 
-	if r.createTag {
+	if next.Equal(ver) {
+		fmt.Println(ver.String())
+		return nil
+	}
+
+	if r.createTag || r.cfg.CreateTag() {
 		head, err := r.repo.Head()
 		if err != nil {
 			return err
@@ -103,13 +107,13 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		err = r.repo.CreateTag(nextTag, head, r.pushTag, auth)
+		pushTag := r.pushTag || r.cfg.PushTag()
+		err = r.repo.CreateTag(nextTag, head, pushTag, auth)
 		if err != nil {
 			return err
 		}
 	}
 
 	fmt.Println(nextTag)
-
 	return nil
 }

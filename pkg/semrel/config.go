@@ -66,6 +66,18 @@ func WithPrefix(prefix string) ConfigOption {
 	}
 }
 
+func WithCreateTag() ConfigOption {
+	return func(c *Config) {
+		c.createTag = true
+	}
+}
+
+func WithPushTag() ConfigOption {
+	return func(c *Config) {
+		c.pushTag = true
+	}
+}
+
 type Config struct {
 	patchTypes     mapset.Set[string]
 	minorTypes     mapset.Set[string]
@@ -75,6 +87,8 @@ type Config struct {
 	defaultBump    BumpKind
 	devMajorBump   BumpKind
 	development    bool
+	createTag      bool
+	pushTag        bool
 }
 
 func (c *Config) DefaultBump() BumpKind {
@@ -104,6 +118,14 @@ func (c *Config) IsDevelopment() bool {
 
 func (c *Config) Prefix() string {
 	return c.prefix
+}
+
+func (c *Config) CreateTag() bool {
+	return c.createTag
+}
+
+func (c *Config) PushTag() bool {
+	return c.pushTag
 }
 
 func NewConfig(opts ...ConfigOption) (*Config, error) {
@@ -167,6 +189,14 @@ func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 
 	if cf.Prefix != "" {
 		opts = append(opts, WithPrefix(cf.Prefix))
+	}
+
+	if cf.CreateTag {
+		opts = append(opts, WithCreateTag())
+	}
+
+	if cf.PushTag {
+		opts = append(opts, WithPushTag())
 	}
 
 	return NewConfig(opts...)

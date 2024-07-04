@@ -3,3 +3,5 @@ patchTypes:
 minorTypes:
   - feat
 development: true
+createTag: true
+pushTag: true
