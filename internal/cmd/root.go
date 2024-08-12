@@ -23,6 +23,9 @@ type rootCommand struct {
 	pushTag           bool
 	authUsername      string
 	authPassword      string
+	authToken         string
+	prerelease        string
+	build             string
 }
 
 func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error) {
@@ -38,11 +41,17 @@ func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error
 		SilenceUsage:  true,
 		Version:       ver,
 	}
+	cmd.Flags().StringVarP(&c.prerelease, "prerelease", "p", "", "prerelease version")
+	cmd.Flags().StringVarP(&c.build, "build", "b", "", "build version")
 	cmd.Flags().BoolVarP(&c.currentBranchOnly, "current-branch-only", "", false, "only tags from the current branch")
 	cmd.Flags().BoolVarP(&c.createTag, "create-tag", "", false, "create the tag")
 	cmd.Flags().BoolVarP(&c.pushTag, "push-tag", "", false, "push the tag")
 	cmd.Flags().StringVarP(&c.authUsername, "auth-username", "", "", "username for basic auth")
 	cmd.Flags().StringVarP(&c.authPassword, "auth-password", "", "", "password for basic auth")
+	cmd.MarkFlagsRequiredTogether("auth-username", "auth-password")
+	cmd.Flags().StringVarP(&c.authToken, "auth-token", "", "", "token for auth")
+	cmd.MarkFlagsMutuallyExclusive("auth-username", "auth-token")
+	cmd.MarkFlagsMutuallyExclusive("auth-password", "auth-token")
 	cmd.AddCommand(
 		newCurrentCommand(rp).cmd,
 		newCompareCommand(rp).cmd,
@@ -80,12 +89,27 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	next := semrel.NextVersion(ver, commits, r.cfg)
-	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
 
 	if next.Equal(ver) {
 		fmt.Println(ver.String())
 		return nil
 	}
+
+	if r.prerelease != "" {
+		next, err = next.SetPrerelease(r.prerelease)
+		if err != nil {
+			return err
+		}
+	}
+
+	if r.build != "" {
+		next, err = next.SetMetadata(r.build)
+		if err != nil {
+			return err
+		}
+	}
+
+	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
 
 	if r.createTag || r.cfg.CreateTag() {
 		head, err := r.repo.Head()
@@ -100,10 +124,21 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 		if pw := os.Getenv("SEMREL_AUTH_PASSWORD"); pw != "" {
 			r.authPassword = pw
 		}
+		if tok := os.Getenv("SEMREL_AUTH_TOKEN"); tok != "" {
+			r.authToken = tok
+		}
+
 		if r.authUsername != "" && r.authPassword != "" {
 			auth = &http.BasicAuth{
 				Username: r.authUsername,
 				Password: r.authPassword,
+			}
+		}
+
+		if r.authToken != "" {
+			auth = &http.BasicAuth{
+				Username: "git",
+				Password: r.authToken,
 			}
 		}
 
