@@ -76,24 +76,21 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	// get latest tag version
 	ver, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
 	if err != nil {
-		if err == repository.ErrNoTags {
-			fmt.Println(r.cfg.InitialVersion().String())
-			return nil
+		if err != repository.ErrNoTags {
+			return err
 		}
-		return err
+		ver = r.cfg.InitialVersion()
 	}
 
-	commits, err := r.repo.Commits(plumbing.ZeroHash, ref.Hash())
-	if err != nil {
-		return err
+	commits := []*semrel.Commit{}
+	if ref != nil {
+		commits, err = r.repo.Commits(plumbing.ZeroHash, ref.Hash())
+		if err != nil {
+			return err
+		}
 	}
 
 	next := semrel.NextVersion(ver, commits, r.cfg)
-
-	if next.Equal(ver) {
-		fmt.Println(ver.String())
-		return nil
-	}
 
 	if r.prerelease != "" {
 		next, err = next.SetPrerelease(r.prerelease)
@@ -107,6 +104,11 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if next.Equal(ver) && next.Metadata() == ver.Metadata() {
+		fmt.Println(ver.String())
+		return nil
 	}
 
 	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
