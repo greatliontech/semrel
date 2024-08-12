@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - id: semrel
-        uses: greatliontech/semrel-action@main
+        uses: ./
         env:
           SEMREL_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

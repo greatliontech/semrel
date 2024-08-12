@@ -1,0 +1,73 @@
+name: semrel action
+description: "setup and run semrel cli"
+inputs:
+  token:
+    description: "GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)"
+    default: ${{ github.token }}
+  tag:
+    description: "tag containing binary to install"
+    default: latest
+    required: true
+  prerelease:
+    description: the prerelease suffix for this release
+    required: false
+    default: ""
+  build:
+    description: the build suffix for this release
+    required: false
+    default: ""
+  prefix:
+    description: next version prefix
+    required: false
+    default: ""
+outputs:
+  next-version:
+    description: "next semver version"
+    value: ${{ steps.semrel.outputs.next-version }}
+  current-version:
+    description: "current semver version"
+    value: ${{ steps.semrel.outputs.current-version }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install go-task
+      uses: jaxxstorm/action-install-gh-release@v1.10.0
+      with:
+        token: ${{ inputs.token }}
+        repo: greatliontech/semrel
+        tag: ${{ inputs.tag }}
+
+    - name: run semrel
+      id: semrel
+      shell: bash
+      env:
+        SEMREL_PRERELEASE: ${{ inputs.prerelease }}
+        SEMREL_BUILD: ${{ inputs.build }}
+      run: |
+        # Get the current version
+        echo "current-version=$(semrel current)" >>$GITHUB_OUTPUT
+
+        # Initialize the command with the CLI tool name
+        cmd="semrel"
+
+        # Check if prerelease is set and not empty
+        if [ -n "$SEMREL_PRERELEASE" ]; then
+          cmd+=" --prerelease $SEMREL_PRERELEASE"
+        fi
+
+        # Check if build is set and not empty
+        if [ -n "$SEMREL_BUILD" ]; then
+          cmd+=" --build $SEMREL_BUILD"
+        fi
+
+        # Print the constructed command (for debugging purposes)
+        echo "Constructed command: $cmd"
+
+        # Execute the constructed command
+        echo "next-version=$(eval $cmd)" >>$GITHUB_OUTPUT
+
+        # Check for failure
+        if [ $? -ne 0 ]; then
+          echo "ERROR: semrel failed"
+          exit 1
+        fi
