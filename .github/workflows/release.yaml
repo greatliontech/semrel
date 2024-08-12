@@ -17,11 +17,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - id: semrel
+      - name: semrel
+        id: semrel
         uses: ./
         env:
-          SEMREL_AUTH_USERNAME: git
-          SEMREL_AUTH_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          SEMREL_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
