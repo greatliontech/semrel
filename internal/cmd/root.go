@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
@@ -72,28 +73,34 @@ func (r *rootCommand) Execute() {
 	os.Exit(0)
 }
 
+var emptyVersion = semver.New(0, 0, 0, "", "")
+
 func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
+	var next semver.Version
+	// check for initial version
+	if r.cfg.InitialVersion() != nil {
+		next = *r.cfg.InitialVersion()
+	}
+
 	// get latest tag version
-	ver, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
+	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
 	if err != nil {
-		if err != repository.ErrNoTags {
-			return err
-		}
-		ver = r.cfg.InitialVersion()
+		return err
 	}
 
-	commits := []*semrel.Commit{}
-	if ref != nil {
-		commits, err = r.repo.Commits(plumbing.ZeroHash, ref.Hash())
-		if err != nil {
-			return err
+	if !current.Equal(emptyVersion) {
+		commits := []*semrel.Commit{}
+		if ref != nil {
+			commits, err = r.repo.Commits(plumbing.ZeroHash, ref.Hash())
+			if err != nil {
+				return err
+			}
 		}
+		next = semrel.NextVersion(current, commits, r.cfg)
 	}
 
-	next := semrel.NextVersion(ver, commits, r.cfg)
-
-	if next.Equal(ver) {
-		fmt.Println(ver.String())
+	if next.Equal(current) {
+		fmt.Println(current.String())
 		return nil
 	}
 

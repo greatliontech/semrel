@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/greatliontech/semrel/internal/repository"
 	"github.com/spf13/cobra"
 )
@@ -28,15 +27,9 @@ func newCurrentCommand(repo *repository.Repo) *currentCommand {
 	return c
 }
 
-var emptyVersion = semver.New(0, 0, 0, "", "")
-
 func (c *currentCommand) runE(cmd *cobra.Command, args []string) error {
 	cv, _, err := c.repo.CurrentVersion(c.currentBranchOnly)
 	if err != nil {
-		if err == repository.ErrNoTags {
-			fmt.Println(emptyVersion.String())
-			return nil
-		}
 		return err
 	}
 	fmt.Println(cv.String())

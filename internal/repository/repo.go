@@ -64,12 +64,12 @@ func (r *Repo) Commits(from, to plumbing.Hash) ([]*semrel.Commit, error) {
 	return commits, nil
 }
 
+var emptyVersion = semver.New(0, 0, 0, "", "")
+
 type versionReference struct {
 	ver *semver.Version
 	ref *plumbing.Reference
 }
-
-var ErrNoTags = errors.New("no tags found")
 
 func (r *Repo) CurrentVersion(currentBranchOnly bool) (*semver.Version, *plumbing.Reference, error) {
 	currentBranchRefs := mapset.NewSet[plumbing.Hash]()
@@ -122,7 +122,7 @@ func (r *Repo) CurrentVersion(currentBranchOnly bool) (*semver.Version, *plumbin
 		return v2.LessThan(v1)
 	})
 	if len(versions) == 0 {
-		return nil, nil, ErrNoTags
+		return emptyVersion, nil, nil
 	}
 	return versions[0].ver, versions[0].ref, nil
 }
