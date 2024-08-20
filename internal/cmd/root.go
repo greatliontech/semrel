@@ -92,6 +92,11 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 
 	next := semrel.NextVersion(ver, commits, r.cfg)
 
+	if next.Equal(ver) {
+		fmt.Println(ver.String())
+		return nil
+	}
+
 	if r.prerelease != "" {
 		next, err = next.SetPrerelease(r.prerelease)
 		if err != nil {
@@ -104,11 +109,6 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	if next.Equal(ver) && next.Metadata() == ver.Metadata() {
-		fmt.Println(ver.String())
-		return nil
 	}
 
 	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
