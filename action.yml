@@ -44,6 +44,9 @@ runs:
         SEMREL_PRERELEASE: ${{ inputs.prerelease }}
         SEMREL_BUILD: ${{ inputs.build }}
       run: |
+        # Print tool version
+        semrel -v
+
         # Get the current version
         echo "current-version=$(semrel current)" >>$GITHUB_OUTPUT
 
