@@ -11,7 +11,7 @@ var (
 
 	commitPattern   = regexp.MustCompile(`^([\w-]+)(?:\(([^\)]*)\))?(!*)\: (.*)$`)
 	footerPattern   = regexp.MustCompile(`^([\w-]+): (.*)$`)
-	breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
+	breakingPattern = regexp.MustCompile("^BREAKING CHANGES?")
 )
 
 type Commit struct {
