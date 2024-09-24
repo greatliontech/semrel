@@ -11,7 +11,7 @@ var (
 
 	commitPattern   = regexp.MustCompile(`^([\w-]+)(?:\(([^\)]*)\))?(!*)\: (.*)$`)
 	footerPattern   = regexp.MustCompile(`^([\w-]+): (.*)$`)
-	breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
+	breakingPattern = regexp.MustCompile("^BREAKING CHANGES?")
 )
 
 type Commit struct {
@@ -24,11 +24,22 @@ type Commit struct {
 }
 
 func (c *Commit) BumpKind(cfg *Config) BumpKind {
-	if c.Attention || breakingPattern.MatchString(c.Body) {
+	if c.Attention || FilterFooters(c.Footers) {
 		return BumpMajor
 	}
+
 	return cfg.BumpKind(c.Type)
 }
+
+func FilterFooters(footers map[string]string) bool {
+	isBreakingChange := false
+	
+	for k := range c.Footers {
+		isBreakingChange = breakingPattern.MatchString(c.Footers[k])
+	}
+	return isBreakingChange
+}
+
 
 func ParseCommitMessage(message string) (*Commit, error) {
 	lines := strings.Split(message, "\n")
