@@ -24,11 +24,28 @@ type Commit struct {
 }
 
 func (c *Commit) BumpKind(cfg *Config) BumpKind {
-	if c.Attention || breakingPattern.MatchString(c.Body) {
+	keys := make([]string, 0, len(c.Footers))
+
+	for k := range c.Footers {
+		keys = append(keys, k)
+	}
+
+	if c.Attention || FilterFooters(keys) {
 		return BumpMajor
 	}
+
 	return cfg.BumpKind(c.Type)
 }
+
+func FilterFooters(keys []string) bool {
+	isBreakingChange := false
+	for k := range keys {
+		isBreakingChange = breakingPattern.MatchString(keys[k])
+	}
+
+	return isBreakingChange
+}
+
 
 func ParseCommitMessage(message string) (*Commit, error) {
 	lines := strings.Split(message, "\n")
