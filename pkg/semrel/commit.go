@@ -24,25 +24,19 @@ type Commit struct {
 }
 
 func (c *Commit) BumpKind(cfg *Config) BumpKind {
-	keys := make([]string, 0, len(c.Footers))
-
-	for k := range c.Footers {
-		keys = append(keys, k)
-	}
-
-	if c.Attention || FilterFooters(keys) {
+	if c.Attention || FilterFooters(c.Footers) {
 		return BumpMajor
 	}
 
 	return cfg.BumpKind(c.Type)
 }
 
-func FilterFooters(keys []string) bool {
+func FilterFooters(footers map[string]string) bool {
 	isBreakingChange := false
-	for k := range keys {
-		isBreakingChange = breakingPattern.MatchString(keys[k])
+	
+	for k := range c.Footers {
+		isBreakingChange = breakingPattern.MatchString(c.Footers[k])
 	}
-
 	return isBreakingChange
 }
 
