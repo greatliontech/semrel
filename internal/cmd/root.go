@@ -54,7 +54,7 @@ func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error
 	cmd.MarkFlagsMutuallyExclusive("auth-username", "auth-token")
 	cmd.MarkFlagsMutuallyExclusive("auth-password", "auth-token")
 	cmd.AddCommand(
-		newCurrentCommand(rp).cmd,
+		newCurrentCommand(rp, cfg).cmd,
 		newCompareCommand(rp).cmd,
 		newValidateCommand().cmd,
 	)
@@ -100,7 +100,8 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	if next.Equal(current) {
-		fmt.Println(current.String())
+		currentTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), current.String())
+		fmt.Println(currentTag)
 		return nil
 	}
 

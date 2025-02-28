@@ -4,18 +4,21 @@ import (
 	"fmt"
 
 	"github.com/greatliontech/semrel/internal/repository"
+	"github.com/greatliontech/semrel/pkg/semrel"
 	"github.com/spf13/cobra"
 )
 
 type currentCommand struct {
 	cmd               *cobra.Command
 	repo              *repository.Repo
+	cfg               *semrel.Config
 	currentBranchOnly bool
 }
 
-func newCurrentCommand(repo *repository.Repo) *currentCommand {
+func newCurrentCommand(repo *repository.Repo, cfg *semrel.Config) *currentCommand {
 	c := &currentCommand{
 		repo: repo,
+		cfg:  cfg,
 	}
 	cmd := &cobra.Command{
 		Use:   "current",
@@ -32,6 +35,7 @@ func (c *currentCommand) runE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(cv.String())
+	currentTag := fmt.Sprintf("%s%s", c.cfg.Prefix(), cv.String())
+	fmt.Println(currentTag)
 	return nil
 }
