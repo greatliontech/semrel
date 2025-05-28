@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package semrel.plugin.v1alpha1;
+
+option go_package = "github.com/greatliontech/semrel/gen/go/plugin/v1alpha1;pluginpb";
+
+message Commit {
+  string type = 1;
+  string description = 2;
+  bool attention = 3;
+  optional string scope = 4;
+  optional string body = 5;
+  map<string, string> footer = 6;
+}
+
+message Version {
+  uint64 major = 1;
+  uint64 minor = 2;
+  uint64 patch = 3;
+  optional string prefix = 4;
+  optional string prerelease = 5;
+  optional string build = 6;
+}
+
+message ReleaseRequest {
+  Version next = 1;
+  Version current = 2;
+  repeated Commit commits = 3;
+}
+
+message ReleaseResponse {}
+
+service SemrelPlugin {
+  rpc Release(ReleaseRequest) returns (ReleaseResponse) {}
+}

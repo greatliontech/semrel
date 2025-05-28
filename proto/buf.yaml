@@ -1,0 +1,10 @@
+version: v2
+name: buf.build/glt/semrel
+deps:
+  - buf.build/googleapis/googleapis
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE

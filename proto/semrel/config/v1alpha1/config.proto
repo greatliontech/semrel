@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package semrel.config.v1alpha1;
+
+option go_package = "github.com/greatliontech/semrel/gen/go/config/v1alpha1;configpb";
+
+enum Bump {
+  BUMP_UNSPECIFIED = 0;
+  BUMP_PATCH = 1;
+  BUMP_MINOR = 2;
+  BUMP_MAJOR = 3;
+}
+
+message Config {
+  string version = 1;
+
+}
+
