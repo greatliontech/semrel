@@ -1,0 +1,2 @@
+FROM alpine:3
+COPY semrel /usr/bin/semrel
