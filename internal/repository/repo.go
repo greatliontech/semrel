@@ -36,7 +36,7 @@ func (r *Repo) Commits(from, to plumbing.Hash) ([]*semrel.Commit, error) {
 	// get the commit log iterator
 	citr, err := r.repo.Log(&git.LogOptions{
 		From:  from,
-		Order: git.LogOrderDFSPost,
+		Order: git.LogOrderCommitterTime,
 	})
 	if err != nil {
 		slog.Error("could not get commit log", "error", err)
