@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"regexp"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/greatliontech/semrel/internal/release"
 	"github.com/greatliontech/semrel/internal/repository"
 	"github.com/greatliontech/semrel/pkg/semrel"
 	"github.com/spf13/cobra"
@@ -50,8 +51,8 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	commits := []*semrel.Commit{}
 	if !current.Equal(emptyVersion) {
-		commits := []*semrel.Commit{}
 		if ref != nil {
 			commits, err = r.repo.Commits(plumbing.ZeroHash, ref.Hash())
 			if err != nil {
@@ -82,22 +83,38 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
-}
 
-// matchRule holds one regex + replacement template.
-type matchRule struct {
-	Match   *regexp.Regexp
-	Replace string
-}
+	filters := release.Filters{}
+	if r.cfg.Filters != nil {
+		filters.Types = r.cfg.Filters().Types
+		filters.Scopes = r.cfg.Filters().Scopes
+	}
 
-// Apply runs the regex on s, substituting every match
-// according to the Replace template (using $1, $2, … for capture groups).
-func (r *matchRule) Apply(s string) string {
-	return r.Match.ReplaceAllString(s, r.Replace)
-}
+	rules := []*release.MatchRule{}
+	if len(r.cfg.MatchRules()) > 0 {
+		for _, rule := range r.cfg.MatchRules() {
+			r, err := release.NewMatchRule(rule.Match, rule.Replace)
+			if err != nil {
+				return fmt.Errorf("invalid match rule: %w", err)
+			}
+			rules = append(rules, r)
+		}
+	}
 
-func generateReleaseNotes(commits []*semrel.Commit, cfg *semrel.Config) string {
-	// This function should generate release notes based on the commits and configuration.
-	// For simplicity, we will return a placeholder string.
-	return "Release notes generated based on commits."
+	notes := release.GenerateReleaseNotes(commits, filters, rules)
+
+	var releaser release.Releaser
+	if strings.EqualFold(r.cfg.Platform(), "gitlab") {
+		releaser, err = release.NewGitlabReleaser("token", "project", "")
+		if err != nil {
+			return fmt.Errorf("could not create gitlab releaser: %w", err)
+		}
+	}
+
+	if err := releaser.Release(nextTag, notes); err != nil {
+		return fmt.Errorf("could not create release: %w", err)
+	}
+
+	fmt.Println(nextTag)
+	return nil
 }

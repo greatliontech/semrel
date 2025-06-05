@@ -6,6 +6,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Filters struct {
+	Types  []string `yaml:"types"`
+	Scopes []string `yaml:"scopes"`
+}
+
 type MatchRule struct {
 	Match   string `yaml:"match"`
 	Replace string `yaml:"replace"`
@@ -45,6 +50,9 @@ type ConfigFile struct {
 
 	// MatchRules are regex rules for matching commit messages and replacing them
 	MatchRules []MatchRule `yaml:"matchRules"`
+
+	// Filters are used to exclude certain commit types and scopes from release notes
+	Filters *Filters `yaml:"filters"`
 }
 
 func ConfigFileFromPath(path string) (*ConfigFile, error) {

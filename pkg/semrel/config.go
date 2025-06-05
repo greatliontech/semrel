@@ -78,6 +78,18 @@ func WithPushTag() ConfigOption {
 	}
 }
 
+func WithMaTchRules(rules ...MatchRule) ConfigOption {
+	return func(c *Config) {
+		c.matchRules = rules
+	}
+}
+
+func WithFilters(filters *Filters) ConfigOption {
+	return func(c *Config) {
+		c.filters = filters
+	}
+}
+
 type Config struct {
 	patchTypes     mapset.Set[string]
 	minorTypes     mapset.Set[string]
@@ -89,6 +101,9 @@ type Config struct {
 	development    bool
 	createTag      bool
 	pushTag        bool
+	platform       string
+	matchRules     []MatchRule
+	filters        *Filters
 }
 
 func (c *Config) DefaultBump() BumpKind {
@@ -126,6 +141,18 @@ func (c *Config) CreateTag() bool {
 
 func (c *Config) PushTag() bool {
 	return c.pushTag
+}
+
+func (c *Config) Platform() string {
+	return c.platform
+}
+
+func (c *Config) MatchRules() []MatchRule {
+	return c.matchRules
+}
+
+func (c *Config) Filters() *Filters {
+	return c.filters
 }
 
 func NewConfig(opts ...ConfigOption) (*Config, error) {
@@ -197,6 +224,14 @@ func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 
 	if cf.PushTag {
 		opts = append(opts, WithPushTag())
+	}
+
+	if len(cf.MatchRules) > 0 {
+		opts = append(opts, WithMaTchRules(cf.MatchRules...))
+	}
+
+	if cf.Filters != nil {
+		opts = append(opts, WithFilters(cf.Filters))
 	}
 
 	return NewConfig(opts...)
