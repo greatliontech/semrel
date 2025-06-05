@@ -85,7 +85,7 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
 
 	filters := release.Filters{}
-	if r.cfg.Filters != nil {
+	if r.cfg.Filters() != nil {
 		filters.Types = r.cfg.Filters().Types
 		filters.Scopes = r.cfg.Filters().Scopes
 	}
@@ -104,6 +104,9 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	notes := release.GenerateReleaseNotes(commits, filters, rules)
 
 	var releaser release.Releaser
+	// check for SEMREL_PLATFORM env var
+	// check for SEMREL_TOKEN env var
+	// check for SEMREL_PROJECT env var
 	if strings.EqualFold(r.cfg.Platform(), "gitlab") {
 		releaser, err = release.NewGitlabReleaser("token", "project", "")
 		if err != nil {
