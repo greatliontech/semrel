@@ -6,6 +6,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Filters struct {
+	Types  []string `yaml:"types"`
+	Scopes []string `yaml:"scopes"`
+}
+
+type MatchRule struct {
+	Match   string `yaml:"match"`
+	Replace string `yaml:"replace"`
+}
+
 // ConfigFile is the configuration file for the semantic release tool in YAML format
 type ConfigFile struct {
 	// The commit types that are considered as no change
@@ -34,6 +44,15 @@ type ConfigFile struct {
 
 	// PushTag if true, pushes the next version tag. Requires CreateTag to be true
 	PushTag bool `yaml:"pushTag"`
+
+	// Platform that the tool is running on, e.g., "github", "gitlab", etc.
+	Platform string `yaml:"platform"`
+
+	// MatchRules are regex rules for matching commit messages and replacing them
+	MatchRules []MatchRule `yaml:"matchRules"`
+
+	// Filters are used to exclude certain commit types and scopes from release notes
+	Filters *Filters `yaml:"filters"`
 }
 
 func ConfigFileFromPath(path string) (*ConfigFile, error) {

@@ -57,6 +57,7 @@ func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error
 		newCurrentCommand(rp, cfg).cmd,
 		newCompareCommand(rp).cmd,
 		newValidateCommand().cmd,
+		newReleaseCommand(rp, cfg).cmd,
 	)
 	c.cmd = cmd
 	return c, nil
