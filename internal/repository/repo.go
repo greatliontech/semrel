@@ -82,7 +82,10 @@ func (r *Repo) CurrentVersion(currentBranchOnly bool) (*semver.Version, *plumbin
 		if err != nil {
 			return nil, nil, err
 		}
-		litr, err := r.repo.Log(&git.LogOptions{From: head.Hash()})
+		litr, err := r.repo.Log(&git.LogOptions{
+			From:  head.Hash(),
+			Order: git.LogOrderCommitterTime,
+		})
 		if err != nil {
 			return nil, nil, err
 		}

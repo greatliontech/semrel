@@ -17,7 +17,7 @@ func NewGitlabReleaser(token, projectID, branch string) (*gitlabReleaser, error)
 	if err != nil {
 		return nil, err
 	}
-	if branch != "" {
+	if branch == "" {
 		project, _, err := client.Projects.GetProject(projectID, nil)
 		if err != nil {
 			return nil, err

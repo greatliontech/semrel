@@ -78,6 +78,12 @@ func WithPushTag() ConfigOption {
 	}
 }
 
+func WithPlatform(platform string) ConfigOption {
+	return func(c *Config) {
+		c.platform = platform
+	}
+}
+
 func WithMaTchRules(rules ...MatchRule) ConfigOption {
 	return func(c *Config) {
 		c.matchRules = rules
@@ -224,6 +230,10 @@ func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 
 	if cf.PushTag {
 		opts = append(opts, WithPushTag())
+	}
+
+	if cf.Platform != "" {
+		opts = append(opts, WithPlatform(cf.Platform))
 	}
 
 	if len(cf.MatchRules) > 0 {

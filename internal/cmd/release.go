@@ -106,6 +106,9 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 
 	platform := r.cfg.Platform()
 	if platform == "" {
+		platform = os.Getenv("SEMREL_PLATFORM")
+	}
+	if platform == "" {
 		platform, err = release.DetectPlatform()
 		if err != nil {
 			return err
