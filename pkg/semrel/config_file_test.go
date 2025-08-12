@@ -15,6 +15,10 @@ minorTypes:
   - minor
 majorTypes:
   - breaking
+platform: github
+matchRules:
+  - match: ((?:PENG|FE)-\d+)
+    replace: myjira.net/$1
 `
 
 func TestConfigFileTypes(t *testing.T) {
@@ -35,6 +39,19 @@ func TestConfigFileTypes(t *testing.T) {
 	}
 	if !expectedTypesMatch(expectedMajorTypes, c.MajorTypes) {
 		t.Errorf("expected %v, got %v", expectedMajorTypes, c.MajorTypes)
+	}
+	if c.Platform != "github" {
+		t.Errorf("expected platform 'github', got '%s'", c.Platform)
+	}
+	if len(c.MatchRules) != 1 {
+		t.Errorf("expected 1 match rule, got %d", len(c.MatchRules))
+	}
+	rule := c.MatchRules[0]
+	if rule.Match != `((?:PENG|FE)-\d+)` || rule.Replace != `myjira.net/$1` {
+		t.Errorf("expected match rule to be %s -> %s, got %s -> %s", `((?:PENG|FE)-\d+)`, `myjira.net/$1`, rule.Match, rule.Replace)
+	}
+	if rule.Replace != "myjira.net/$1" {
+		t.Errorf("expected replace to be 'myjira.net/$1', got '%s'", rule.Replace)
 	}
 }
 
