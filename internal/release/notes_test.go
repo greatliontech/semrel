@@ -68,3 +68,23 @@ func TestNotesMatchRules(t *testing.T) {
 		t.Errorf("expected:\n%s\ngot:\n%s", exp, notes)
 	}
 }
+
+func TestNotesNoScopes(t *testing.T) {
+	commits := []*semrel.Commit{
+		{
+			Type:        "feat",
+			Description: "Add new feature [TRACK-123]",
+		},
+		{
+			Type:        "fix",
+			Description: "Fix a bug [TRACK-789]",
+		},
+	}
+	notes := GenerateReleaseNotes(commits, nil, nil)
+	exp := `- feat: Add new feature [TRACK-123]
+- fix: Fix a bug [TRACK-789]
+`
+	if notes != exp {
+		t.Errorf("expected:\n%s\ngot:\n%s", exp, notes)
+	}
+}

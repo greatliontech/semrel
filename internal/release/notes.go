@@ -64,9 +64,12 @@ func GenerateReleaseNotes(commits []*semrel.Commit, filters *Filters, matchRules
 		}
 		b.WriteString("- ")
 		b.WriteString(commit.Type)
-		b.WriteString("(")
-		b.WriteString(commit.Scope)
-		b.WriteString("): ")
+		if commit.Scope != "" {
+			b.WriteString("(")
+			b.WriteString(commit.Scope)
+			b.WriteString(")")
+		}
+		b.WriteString(": ")
 		description := commit.Description
 		for _, rule := range matchRules {
 			description = rule.Apply(description)
