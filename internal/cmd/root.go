@@ -83,11 +83,15 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 		next = *r.cfg.InitialVersion()
 	}
 
+	fmt.Println("first")
+
 	// get latest tag version
 	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("second")
 
 	if !current.Equal(emptyVersion) {
 		commits := []*semrel.Commit{}

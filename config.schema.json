@@ -1,0 +1,58 @@
+{
+ "properties": {
+  "defaultBump": {
+   "default": "none",
+   "enum": [
+    "none",
+    "patch",
+    "minor",
+    "major"
+   ],
+   "type": "string"
+  },
+  "development": {
+   "type": "boolean"
+  },
+  "initialVersion": {
+   "default": "1.0.0",
+   "type": "string"
+  },
+  "majorTypes": {
+   "items": {
+    "type": "string"
+   },
+   "type": [
+    "array",
+    "null"
+   ]
+  },
+  "minorTypes": {
+   "default": [
+    "feat"
+   ],
+   "items": {
+    "type": "string"
+   },
+   "type": [
+    "array",
+    "null"
+   ]
+  },
+  "patchTypes": {
+   "default": [
+    "fix"
+   ],
+   "items": {
+    "type": "string"
+   },
+   "type": [
+    "array",
+    "null"
+   ]
+  },
+  "prefix": {
+   "type": "string"
+  }
+ },
+ "type": "object"
+}

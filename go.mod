@@ -9,8 +9,11 @@ require (
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.0
+	github.com/goccy/go-yaml v1.18.0
+	github.com/google/go-github/v74 v74.0.0
 	github.com/spf13/cobra v1.9.1
-	gopkg.in/yaml.v3 v3.0.1
+	github.com/swaggest/jsonschema-go v0.3.78
+	gitlab.com/gitlab-org/api/client-go v0.129.0
 )
 
 require (
@@ -22,9 +25,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/go-github/v74 v74.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/greatliontech/semrel-plugin v0.0.0-20240705095857-d403db9704af // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -34,8 +35,8 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/swaggest/refl v1.4.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	gitlab.com/gitlab-org/api/client-go v0.129.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect

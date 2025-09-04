@@ -3,7 +3,7 @@ package semrel
 import (
 	"os"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 type Filters struct {
@@ -18,26 +18,26 @@ type MatchRule struct {
 
 // ConfigFile is the configuration file for the semantic release tool in YAML format
 type ConfigFile struct {
-	// The commit types that are considered as no change
-	DefaultBump string `yaml:"defaultBump"`
+	// The default bump type if no commit types match. Default is "none"
+	DefaultBump string `yaml:"defaultBump" json:"defaultBump" enum:"none,patch,minor,major" default:"none"`
 
 	// The commit types that are considered as patch
-	PatchTypes []string `yaml:"patchTypes"`
+	PatchTypes []string `yaml:"patchTypes" json:"patchTypes" default:"[\"fix\"]"`
 
 	// The commit types that are considered as minor
-	MinorTypes []string `yaml:"minorTypes"`
+	MinorTypes []string `yaml:"minorTypes" json:"minorTypes" default:"[\"feat\"]"`
 
 	// The commit types that are considered as major
-	MajorTypes []string `yaml:"majorTypes"`
+	MajorTypes []string `yaml:"majorTypes" json:"majorTypes"`
 
 	// Initial version overrides the default initial version. If not set, it defaults to 1.0.0
-	InitialVersion string `yaml:"initialVersion"`
+	InitialVersion string `yaml:"initialVersion" json:"initialVersion" default:"1.0.0"`
 
 	// Development if true, sets the initial version to 0.1.0 and treats breaking changes as minor bumps
-	Development bool `yaml:"development"`
+	Development bool `yaml:"development" json:"development"`
 
 	// Prefix is the prefix for the versions
-	Prefix string `yaml:"prefix"`
+	Prefix string `yaml:"prefix" json:"prefix"`
 
 	// CreateTag if true, creates the next version tag
 	CreateTag bool `yaml:"createTag"`

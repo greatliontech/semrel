@@ -113,6 +113,34 @@ func TestInvalidFilePath(t *testing.T) {
 	}
 }
 
+func TestEmptyTypes(t *testing.T) {
+	cnf := `
+patchTypes: []
+minorTypes:
+  - feat
+  - minor
+`
+	c, err := ConfigFileFromBytes([]byte(cnf))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.PatchTypes == nil {
+		t.Error("expected patchTypes to be an empty slice, got nil")
+	}
+	if c.MajorTypes != nil {
+		t.Errorf("expected majorTypes to be nil, got %v", c.MajorTypes)
+	}
+	if len(c.MinorTypes) != 2 {
+		t.Errorf("expected minorTypes to have 2 elements, got %d", len(c.MinorTypes))
+	}
+	for i, expected := range []string{"feat", "minor"} {
+		if c.MinorTypes[i] != expected {
+			t.Errorf("expected minorTypes[%d] to be %s, got %s", i, expected, c.MinorTypes[i])
+		}
+	}
+}
+
 func expectedTypesMatch(expected, actual []string) bool {
 	if len(expected) != len(actual) {
 		return false

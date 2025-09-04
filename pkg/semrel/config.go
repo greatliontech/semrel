@@ -196,15 +196,21 @@ func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 		opts = append(opts, WithDefaultBump(bump))
 	}
 
-	if len(cf.PatchTypes) > 0 {
+	if cf.PatchTypes == nil {
+		opts = append(opts, WithPatchTypes(DefaultConfig.patchTypes.ToSlice()...))
+	} else if len(cf.PatchTypes) > 0 {
 		opts = append(opts, WithPatchTypes(cf.PatchTypes...))
 	}
 
-	if len(cf.MinorTypes) > 0 {
+	if cf.MinorTypes == nil {
+		opts = append(opts, WithMinorTypes(DefaultConfig.minorTypes.ToSlice()...))
+	} else if len(cf.MinorTypes) > 0 {
 		opts = append(opts, WithMinorTypes(cf.MinorTypes...))
 	}
 
-	if len(cf.MajorTypes) > 0 {
+	if cf.MajorTypes == nil {
+		opts = append(opts, WithMajorTypes(DefaultConfig.majorTypes.ToSlice()...))
+	} else if len(cf.MajorTypes) > 0 {
 		opts = append(opts, WithMajorTypes(cf.MajorTypes...))
 	}
 
