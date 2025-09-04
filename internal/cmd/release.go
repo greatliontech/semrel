@@ -125,7 +125,7 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := releaser.Release(nextTag, notes); err != nil {
-		return fmt.Errorf("could not create release: %w", err)
+		return fmt.Errorf("could not create release for next %q (current %q): %w", nextTag, current.String(), err)
 	}
 
 	fmt.Println(nextTag)
