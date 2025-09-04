@@ -20,6 +20,10 @@ inputs:
     description: next version prefix
     required: false
     default: ""
+  release:
+    description: enable release mode
+    required: false
+    default: "false"
 outputs:
   next-version:
     description: "next semver version"
@@ -46,6 +50,17 @@ runs:
       run: |
         # Print tool version
         semrel -v
+
+        # Check for release
+        if [ "${{ inputs.release }}" = "true" ]; then
+          echo "Release mode enabled"
+          semrel release
+          if [ $? -ne 0 ]; then
+            echo "ERROR: semrel release failed"
+            exit 1
+          fi
+          exit 0
+        fi
 
         # Get the current version
         echo "current-version=$(semrel current)" >>$GITHUB_OUTPUT
