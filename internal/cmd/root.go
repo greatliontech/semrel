@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -29,8 +28,7 @@ type rootCommand struct {
 	build             string
 }
 
-func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error) {
-	rp := repository.New(r)
+func New(rp *repository.Repo, cfg *semrel.Config, ver string) (*rootCommand, error) {
 	c := &rootCommand{
 		repo: rp,
 		cfg:  cfg,
@@ -63,15 +61,15 @@ func New(r *git.Repository, cfg *semrel.Config, ver string) (*rootCommand, error
 	return c, nil
 }
 
-func (r *rootCommand) Execute() {
+func (r *rootCommand) Execute() int {
 	err := r.cmd.Execute()
 	if err != nil {
 		if err != errCompareFailed {
 			slog.Error("command failed", "error", err)
 		}
-		os.Exit(1)
+		return 1
 	}
-	os.Exit(0)
+	return 0
 }
 
 var emptyVersion = semver.New(0, 0, 0, "", "")
@@ -83,15 +81,11 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 		next = *r.cfg.InitialVersion()
 	}
 
-	fmt.Println("first")
-
 	// get latest tag version
 	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("second")
 
 	if !current.Equal(emptyVersion) {
 		commits := []*semrel.Commit{}

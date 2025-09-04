@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/Masterminds/semver/v3"
@@ -16,12 +18,39 @@ import (
 	"github.com/greatliontech/semrel/pkg/semrel"
 )
 
-type Repo struct {
-	repo *git.Repository
+func Open() (*Repo, error) {
+	// Get the current directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("could not get cwd: %w", err)
+	}
+
+	// Search for the .git directory
+	gitDir, err := findGitDir(currentDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not find .git directory: %w", err)
+	}
+
+	// open repository
+	r, err := git.PlainOpen(gitDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not open repository: %w", err)
+	}
+
+	return New(r, filepath.Dir(gitDir)), nil
 }
 
-func New(repo *git.Repository) *Repo {
-	return &Repo{repo: repo}
+type Repo struct {
+	repo *git.Repository
+	root string
+}
+
+func New(repo *git.Repository, root string) *Repo {
+	return &Repo{repo: repo, root: root}
+}
+
+func (r *Repo) Root() string {
+	return r.root
 }
 
 func (r *Repo) Head() (plumbing.Hash, error) {

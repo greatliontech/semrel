@@ -88,7 +88,7 @@ func TestCommits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo := New(r)
+	repo := New(r, "/tmp/test")
 	commits, err := repo.Commits(plumbing.ZeroHash, plumbing.ZeroHash)
 	if err != nil {
 		t.Fatal(err)
