@@ -104,19 +104,27 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 
 	notes := release.GenerateReleaseNotes(commits, filters, rules)
 
-	platform := r.cfg.Platform()
-	if platform == "" {
-		platform = os.Getenv("SEMREL_PLATFORM")
-	}
-	if platform == "" {
-		platform, err = release.DetectPlatform()
-		if err != nil {
-			return err
+	platform, tok, proj, err := release.DetectPlatform()
+	// only one type of error here, release.ErrPlatformDetectionFailed
+	if err != nil {
+		platform = r.cfg.Platform()
+		// env has precedence over config
+		if p := os.Getenv("SEMREL_PLATFORM"); p != "" {
+			platform = p
+		}
+		if platform == "" {
+			return fmt.Errorf("platform not specified and could not be detected, please set SEMREL_PLATFORM environment variable or configure platform in semrel config: %w", err)
 		}
 	}
 
-	tok := os.Getenv("SEMREL_TOKEN")
-	proj := os.Getenv("SEMREL_PROJECT")
+	// check for overrides from env
+	if t := os.Getenv("SEMREL_TOKEN"); t != "" {
+		tok = t
+	}
+	if p := os.Getenv("SEMREL_PROJECT"); p != "" {
+		proj = p
+	}
+	// branch is explicitly set or empty
 	branch := os.Getenv("SEMREL_BRANCH")
 
 	releaser, err := release.Platform(platform, tok, proj, branch)

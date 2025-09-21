@@ -25,12 +25,16 @@ func Platform(platform, token, projectID, branch string) (Releaser, error) {
 	}
 }
 
-func DetectPlatform() (string, error) {
+func DetectPlatform() (string, string, string, error) {
 	if os.Getenv("GITLAB_CI") == "true" {
-		return "gitlab", nil
+		token := os.Getenv("GITLAB_TOKEN")
+		project := os.Getenv("CI_PROJECT_ID")
+		return "gitlab", token, project, nil
 	}
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
-		return "github", nil
+		token := os.Getenv("GITHUB_TOKEN")
+		project := os.Getenv("GITHUB_REPOSITORY")
+		return "github", token, project, nil
 	}
-	return "", ErrPlatformDetectionFailed
+	return "", "", "", ErrPlatformDetectionFailed
 }
