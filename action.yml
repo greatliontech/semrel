@@ -51,19 +51,19 @@ runs:
         # Print tool version
         semrel -v
 
+        # Get the current version
+        echo "current-version=$(semrel current)" >>$GITHUB_OUTPUT
+
         # Check for release
         if [ "${{ inputs.release }}" = "true" ]; then
           echo "Release mode enabled"
-          semrel release
+          echo "next-version=$(semrel release)" >>$GITHUB_OUTPUT
           if [ $? -ne 0 ]; then
             echo "ERROR: semrel release failed"
             exit 1
           fi
           exit 0
         fi
-
-        # Get the current version
-        echo "current-version=$(semrel current)" >>$GITHUB_OUTPUT
 
         # Initialize the command with the CLI tool name
         cmd="semrel"
