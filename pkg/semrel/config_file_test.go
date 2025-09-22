@@ -83,7 +83,7 @@ patchTypes:
 
 func TestConfigFromFile(t *testing.T) {
 	cf := filepath.Join(os.TempDir(), ".semrel")
-	err := os.WriteFile(cf, []byte(typesString), 0644)
+	err := os.WriteFile(cf, []byte(typesString), 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,6 +138,35 @@ minorTypes:
 		if c.MinorTypes[i] != expected {
 			t.Errorf("expected minorTypes[%d] to be %s, got %s", i, expected, c.MinorTypes[i])
 		}
+	}
+}
+
+func TestGithubIssue3(t *testing.T) {
+	cnf := `
+patchTypes:
+  - fix
+  - chore
+minorTypes:
+  - feat
+`
+	c, err := ConfigFileFromBytes([]byte(cnf))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.MajorTypes) != 0 {
+		t.Errorf("expected majorTypes to be empty, got %v", c.MajorTypes)
+	}
+	if len(c.PatchTypes) != 2 {
+		t.Errorf("expected patchTypes to have 2 elements, got %d", len(c.PatchTypes))
+	}
+	if len(c.MinorTypes) != 1 {
+		t.Errorf("expected minorTypes to have 1 element, got %d", len(c.MinorTypes))
+	}
+	if c.MinorTypes[0] != "feat" {
+		t.Errorf("expected minorTypes[0] to be 'feat', got '%s'", c.MinorTypes[0])
+	}
+	if c.PatchTypes[0] != "fix" || c.PatchTypes[1] != "chore" {
+		t.Errorf("expected patchTypes to be ['fix', 'chore'], got %v", c.PatchTypes)
 	}
 }
 
