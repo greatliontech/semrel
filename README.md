@@ -261,7 +261,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: greatliontech/semrel@main
+      - uses: greatliontech/semrel@v0
         id: semrel
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -270,15 +270,28 @@ jobs:
       - run: echo "Next version is ${{ steps.semrel.outputs.next-version }}"
 ```
 
+### Action Versioning
+
+The action follows standard GitHub Action versioning conventions:
+
+| Reference | Description |
+|-----------|-------------|
+| `@v0` | Latest v0.x.x release (recommended for stability) |
+| `@v0.5` | Latest v0.5.x release |
+| `@v0.5.2` | Exact version (immutable) |
+| `@main` | Latest development (not recommended for production) |
+
+Major version tags (e.g., `v0`, `v1`) are automatically updated on each release to point to the latest minor/patch version, so you get bug fixes automatically while maintaining API stability.
+
 ### Action Inputs
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `token` | GitHub token for releases | Required |
-| `tag` | Create git tag | `false` |
+| `token` | GitHub token for releases | `${{ github.token }}` |
+| `tag` | Tool version to download | `latest` |
 | `prerelease` | Prerelease suffix | |
 | `build` | Build metadata | |
-| `prefix` | Version prefix | `v` |
+| `prefix` | Version prefix | |
 | `release` | Create GitHub release | `false` |
 
 ### Action Outputs
