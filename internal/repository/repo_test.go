@@ -106,3 +106,148 @@ func TestCommits(t *testing.T) {
 		}
 	}
 }
+
+func TestCurrentVersionWithMultipleTags(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: "v0.1.0"},
+		{msg: "fix: bug", tag: "v0.1.1"},
+		{msg: "feat: new feature", tag: "v0.2.0"},
+		{msg: "fix: another bug", tag: "v0.2.1"},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+	ver, ref, err := repo.CurrentVersion(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "0.2.1" {
+		t.Errorf("expected version 0.2.1, got %s", ver.String())
+	}
+	if ref == nil {
+		t.Error("expected non-nil reference")
+	}
+}
+
+func TestCurrentVersionWithNonSemverTags(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: "v1.0.0"},
+		{msg: "fix: bug", tag: "release-2023"},
+		{msg: "feat: feature", tag: "v1.1.0"},
+		{msg: "fix: another", tag: "not-a-version"},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+	ver, _, err := repo.CurrentVersion(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "1.1.0" {
+		t.Errorf("expected version 1.1.0, got %s", ver.String())
+	}
+}
+
+func TestCurrentVersionEmptyRepo(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: ""},
+		{msg: "fix: bug", tag: ""},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+	ver, ref, err := repo.CurrentVersion(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "0.0.0" {
+		t.Errorf("expected version 0.0.0, got %s", ver.String())
+	}
+	if ref != nil {
+		t.Error("expected nil reference for repo with no tags")
+	}
+}
+
+func TestCurrentVersionSortsCorrectly(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: "v2.0.0"},
+		{msg: "fix: bug", tag: "v1.0.0"},
+		{msg: "feat: feature", tag: "v1.10.0"},
+		{msg: "fix: another", tag: "v1.9.0"},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+	ver, _, err := repo.CurrentVersion(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "2.0.0" {
+		t.Errorf("expected version 2.0.0, got %s", ver.String())
+	}
+}
+
+func TestHead(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: ""},
+		{msg: "fix: bug", tag: ""},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+	head, err := repo.Head()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if head == plumbing.ZeroHash {
+		t.Error("expected non-zero hash for head")
+	}
+}
+
+func TestCreateTag(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: ""},
+		{msg: "fix: bug", tag: ""},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+	head, err := repo.Head()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = repo.CreateTag("v1.0.0", head, false, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ver, _, err := repo.CurrentVersion(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "1.0.0" {
+		t.Errorf("expected version 1.0.0, got %s", ver.String())
+	}
+}
+
+func TestRoot(t *testing.T) {
+	r, err := testRepo([]testCommit{{msg: "initial", tag: ""}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/my/repo/root")
+	if repo.Root() != "/my/repo/root" {
+		t.Errorf("expected root /my/repo/root, got %s", repo.Root())
+	}
+}

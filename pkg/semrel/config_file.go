@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
+	"github.com/greatliontech/semrel/internal/validation"
 )
 
 type Filters struct {
@@ -69,5 +70,30 @@ func ConfigFileFromBytes(b []byte) (*ConfigFile, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := c.Validate(); err != nil {
+		return nil, err
+	}
 	return c, nil
+}
+
+// Validate validates the configuration file values.
+func (c *ConfigFile) Validate() error {
+	if err := validation.ValidatePrefix(c.Prefix); err != nil {
+		return err
+	}
+	if err := validation.ValidateInitialVersion(c.InitialVersion); err != nil {
+		return err
+	}
+	if err := validation.ValidatePlatform(c.Platform); err != nil {
+		return err
+	}
+	if err := validation.ValidateDefaultBump(c.DefaultBump); err != nil {
+		return err
+	}
+	for _, rule := range c.MatchRules {
+		if err := validation.ValidateMatchRule(rule.Match); err != nil {
+			return err
+		}
+	}
+	return nil
 }
