@@ -1,0 +1,67 @@
+name: test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+
+      - name: Run tests
+        run: go test -v -race ./...
+
+      - name: Build
+        run: go build -o semrel .
+
+  # Validate the action.yml structure
+  validate-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate action.yml
+        run: |
+          # Check action.yml exists and has required fields
+          if [ ! -f action.yml ]; then
+            echo "ERROR: action.yml not found"
+            exit 1
+          fi
+
+          # Verify required fields exist
+          for field in name description runs using; do
+            if ! grep -q "$field:" action.yml; then
+              echo "ERROR: Missing field: $field"
+              exit 1
+            fi
+          done
+          echo "action.yml structure is valid"
+
+      - name: Validate action inputs/outputs
+        run: |
+          # Check all documented inputs exist
+          for input in token tag prerelease build prefix release; do
+            if ! grep -q "$input:" action.yml; then
+              echo "ERROR: Missing input: $input"
+              exit 1
+            fi
+          done
+          echo "All inputs defined"
+
+          # Check outputs exist
+          for output in next-version current-version; do
+            if ! grep -q "$output:" action.yml; then
+              echo "ERROR: Missing output: $output"
+              exit 1
+            fi
+          done
+          echo "All outputs defined"
