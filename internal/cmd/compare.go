@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/greatliontech/semrel/internal/repository"
@@ -16,6 +18,12 @@ type compareCommand struct {
 	lt                []string
 	gt                []string
 	currentBranchOnly bool
+	jsonOutput        bool
+}
+
+type CompareOutput struct {
+	Version string `json:"version"`
+	Result  bool   `json:"result"`
 }
 
 func newCompareCommand(repo *repository.Repo) *compareCommand {
@@ -33,6 +41,7 @@ func newCompareCommand(repo *repository.Repo) *compareCommand {
 	cmd.Flags().StringSliceVarP(&c.lt, "lt", "", nil, "less than")
 	cmd.Flags().StringSliceVarP(&c.gt, "gt", "", nil, "greater than")
 	cmd.Flags().BoolVarP(&c.currentBranchOnly, "current-branch-only", "", false, "only compare the current branch")
+	cmd.Flags().BoolVar(&c.jsonOutput, "json", false, "output in JSON format")
 	c.cmd = cmd
 	return c
 }
@@ -57,7 +66,7 @@ func (c *compareCommand) runE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if !current.LessThan(other) && !current.Equal(other) {
-			return errCompareFailed
+			return c.fail(current.String())
 		}
 	}
 
@@ -67,7 +76,7 @@ func (c *compareCommand) runE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if !current.GreaterThan(other) && !current.Equal(other) {
-			return errCompareFailed
+			return c.fail(current.String())
 		}
 	}
 
@@ -77,7 +86,7 @@ func (c *compareCommand) runE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if !current.LessThan(other) {
-			return errCompareFailed
+			return c.fail(current.String())
 		}
 	}
 
@@ -87,9 +96,36 @@ func (c *compareCommand) runE(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		if !current.GreaterThan(other) {
-			return errCompareFailed
+			return c.fail(current.String())
 		}
 	}
 
+	if c.jsonOutput {
+		output := CompareOutput{
+			Version: current.String(),
+			Result:  true,
+		}
+		b, err := json.Marshal(output)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+	}
+
 	return nil
+}
+
+func (c *compareCommand) fail(version string) error {
+	if c.jsonOutput {
+		output := CompareOutput{
+			Version: version,
+			Result:  false,
+		}
+		b, err := json.Marshal(output)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+	}
+	return errCompareFailed
 }

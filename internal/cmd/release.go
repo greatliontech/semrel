@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/Masterminds/semver/v3"
@@ -16,15 +18,25 @@ type releaseCommand struct {
 	cmd               *cobra.Command
 	repo              *repository.Repo
 	cfg               *semrel.Config
+	root              *rootCommand
 	prerelease        string
 	build             string
 	currentBranchOnly bool
+	jsonOutput        bool
 }
 
-func newReleaseCommand(repo *repository.Repo, cfg *semrel.Config) *releaseCommand {
+type ReleaseOutput struct {
+	Current string `json:"current"`
+	Next    string `json:"next"`
+	Created bool   `json:"created"`
+	DryRun  bool   `json:"dry_run,omitempty"`
+}
+
+func newReleaseCommand(repo *repository.Repo, cfg *semrel.Config, root *rootCommand) *releaseCommand {
 	c := &releaseCommand{
 		repo: repo,
 		cfg:  cfg,
+		root: root,
 	}
 	cmd := &cobra.Command{
 		Use:   "release",
@@ -34,6 +46,7 @@ func newReleaseCommand(repo *repository.Repo, cfg *semrel.Config) *releaseComman
 	cmd.Flags().StringVarP(&c.prerelease, "prerelease", "p", "", "prerelease version")
 	cmd.Flags().StringVarP(&c.build, "build", "b", "", "build version")
 	cmd.Flags().BoolVarP(&c.currentBranchOnly, "current-branch-only", "", false, "only tags from the current branch")
+	cmd.Flags().BoolVar(&c.jsonOutput, "json", false, "output in JSON format")
 	c.cmd = cmd
 	return c
 }
@@ -62,8 +75,17 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 		next = semrel.NextVersion(current, commits, r.cfg)
 	}
 
+	currentTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), current.String())
+
 	if next.Equal(current) {
-		currentTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), current.String())
+		if r.jsonOutput {
+			return r.outputJSON(ReleaseOutput{
+				Current: currentTag,
+				Next:    currentTag,
+				Created: false,
+				DryRun:  r.root.dryRun,
+			})
+		}
 		fmt.Println(currentTag)
 		return nil
 	}
@@ -84,6 +106,21 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 
 	nextTag := fmt.Sprintf("%s%s", r.cfg.Prefix(), next.String())
 
+	// Handle dry-run mode
+	if r.root.dryRun {
+		slog.Debug("dry-run: would create release", "tag", nextTag, "current", currentTag)
+		if r.jsonOutput {
+			return r.outputJSON(ReleaseOutput{
+				Current: currentTag,
+				Next:    nextTag,
+				Created: false,
+				DryRun:  true,
+			})
+		}
+		fmt.Printf("[dry-run] would release: %s\n", nextTag)
+		return nil
+	}
+
 	var filters *release.Filters
 	if r.cfg.Filters() != nil {
 		filters = &release.Filters{}
@@ -94,11 +131,11 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	rules := []*release.MatchRule{}
 	if len(r.cfg.MatchRules()) > 0 {
 		for _, rule := range r.cfg.MatchRules() {
-			r, err := release.NewMatchRule(rule.Match, rule.Replace)
+			mr, err := release.NewMatchRule(rule.Match, rule.Replace)
 			if err != nil {
 				return fmt.Errorf("invalid match rule: %w", err)
 			}
-			rules = append(rules, r)
+			rules = append(rules, mr)
 		}
 	}
 
@@ -136,6 +173,23 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not create release for next %q (current %q): %w", nextTag, current.String(), err)
 	}
 
+	if r.jsonOutput {
+		return r.outputJSON(ReleaseOutput{
+			Current: currentTag,
+			Next:    nextTag,
+			Created: true,
+		})
+	}
+
 	fmt.Println(nextTag)
+	return nil
+}
+
+func (r *releaseCommand) outputJSON(output ReleaseOutput) error {
+	b, err := json.Marshal(output)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
 	return nil
 }

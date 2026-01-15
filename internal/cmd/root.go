@@ -9,6 +9,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/greatliontech/semrel/internal/errors"
 	"github.com/greatliontech/semrel/internal/repository"
 	"github.com/greatliontech/semrel/pkg/semrel"
 	"github.com/spf13/cobra"
@@ -26,6 +27,8 @@ type rootCommand struct {
 	authToken         string
 	prerelease        string
 	build             string
+	verbose           bool
+	dryRun            bool
 }
 
 func New(rp *repository.Repo, cfg *semrel.Config, ver string) (*rootCommand, error) {
@@ -39,7 +42,12 @@ func New(rp *repository.Repo, cfg *semrel.Config, ver string) (*rootCommand, err
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Version:       ver,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			c.setupLogging()
+		},
 	}
+	cmd.PersistentFlags().BoolVarP(&c.verbose, "verbose", "v", false, "enable verbose output")
+	cmd.PersistentFlags().BoolVar(&c.dryRun, "dry-run", false, "simulate actions without making changes")
 	cmd.Flags().StringVarP(&c.prerelease, "prerelease", "p", "", "prerelease version")
 	cmd.Flags().StringVarP(&c.build, "build", "b", "", "build version")
 	cmd.Flags().BoolVarP(&c.currentBranchOnly, "current-branch-only", "", false, "only tags from the current branch")
@@ -55,10 +63,19 @@ func New(rp *repository.Repo, cfg *semrel.Config, ver string) (*rootCommand, err
 		newCurrentCommand(rp, cfg).cmd,
 		newCompareCommand(rp).cmd,
 		newValidateCommand().cmd,
-		newReleaseCommand(rp, cfg).cmd,
+		newReleaseCommand(rp, cfg, c).cmd,
 	)
 	c.cmd = cmd
 	return c, nil
+}
+
+func (r *rootCommand) setupLogging() {
+	level := slog.LevelWarn
+	if r.verbose {
+		level = slog.LevelDebug
+	}
+	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})
+	slog.SetDefault(slog.New(handler))
 }
 
 func (r *rootCommand) Execute() int {
@@ -67,9 +84,26 @@ func (r *rootCommand) Execute() int {
 		if err != errCompareFailed {
 			slog.Error("command failed", "error", err)
 		}
-		return 1
+		return exitCodeFromError(err)
 	}
-	return 0
+	return ExitSuccess
+}
+
+func exitCodeFromError(err error) int {
+	switch {
+	case err == errCompareFailed:
+		return ExitGeneralError
+	case errors.IsValidationError(err):
+		return ExitValidation
+	case errors.IsConfigError(err):
+		return ExitConfig
+	case errors.IsRepositoryError(err):
+		return ExitRepository
+	case errors.IsOperationError(err):
+		return ExitRelease
+	default:
+		return ExitGeneralError
+	}
 }
 
 var emptyVersion = semver.New(0, 0, 0, "", "")
