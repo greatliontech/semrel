@@ -257,14 +257,14 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - uses: greatliontech/semrel@main
         id: semrel
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          releaseToken: ${{ secrets.RELEASE_TOKEN }}
           release: true
 
       - run: echo "Next version is ${{ steps.semrel.outputs.next-version }}"
@@ -274,8 +274,9 @@ jobs:
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `token` | GitHub token for releases | Required |
-| `tag` | Create git tag | `false` |
+| `token` | GitHub token to download the semrel binary | `github.token` |
+| `releaseToken` | Token for creating releases (use a PAT or GitHub App token to trigger other workflows) | `github.token` |
+| `tag` | Tag of semrel release to install | `latest` |
 | `prerelease` | Prerelease suffix | |
 | `build` | Build metadata | |
 | `prefix` | Version prefix | `v` |

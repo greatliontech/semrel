@@ -2,7 +2,10 @@ name: semrel action
 description: "setup and run semrel cli"
 inputs:
   token:
-    description: "GITHUB_TOKEN or a `repo` scoped Personal Access Token (PAT)"
+    description: "GitHub token to download the semrel binary"
+    default: ${{ github.token }}
+  releaseToken:
+    description: "Token for creating releases (use a PAT or GitHub App token to trigger other workflows)"
     default: ${{ github.token }}
   tag:
     description: "tag containing binary to install"
@@ -34,7 +37,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Install go-task
+    - name: Install semrel
       uses: jaxxstorm/action-install-gh-release@v1.10.0
       with:
         token: ${{ inputs.token }}
@@ -45,6 +48,7 @@ runs:
       id: semrel
       shell: bash
       env:
+        SEMREL_TOKEN: ${{ inputs.releaseToken }}
         SEMREL_PRERELEASE: ${{ inputs.prerelease }}
         SEMREL_BUILD: ${{ inputs.build }}
       run: |
