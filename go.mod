@@ -11,6 +11,7 @@ require (
 	github.com/go-git/go-git/v5 v5.16.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-github/v74 v74.0.0
+	github.com/modelcontextprotocol/go-sdk v1.2.0
 	github.com/spf13/cobra v1.9.1
 	github.com/swaggest/jsonschema-go v0.3.78
 	gitlab.com/gitlab-org/api/client-go v0.129.0
@@ -26,6 +27,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/jsonschema-go v0.3.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -37,6 +39,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/swaggest/refl v1.4.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect

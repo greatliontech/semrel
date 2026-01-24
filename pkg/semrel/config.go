@@ -161,6 +161,18 @@ func (c *Config) Filters() *Filters {
 	return c.filters
 }
 
+func (c *Config) PatchTypes() []string {
+	return c.patchTypes.ToSlice()
+}
+
+func (c *Config) MinorTypes() []string {
+	return c.minorTypes.ToSlice()
+}
+
+func (c *Config) MajorTypes() []string {
+	return c.majorTypes.ToSlice()
+}
+
 func NewConfig(opts ...ConfigOption) (*Config, error) {
 	c := &Config{
 		patchTypes: mapset.NewSet[string](),
