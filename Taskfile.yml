@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  BINARY: semrel
+  INSTALL_DIR: "{{.HOME}}/.local/bin"
+  BASH_COMPLETION_DIR: "{{.HOME}}/.local/share/bash-completion/completions"
+  ZSH_COMPLETION_DIR: "{{.HOME}}/.local/share/zsh/site-functions"
+  FISH_COMPLETION_DIR: "{{.HOME}}/.config/fish/completions"
+
+tasks:
+  default:
+    desc: Help (this message)
+    cmds:
+      - task -l
+    silent: true
+
+  build:
+    desc: Build the semrel binary
+    cmds:
+      - go build -o {{.BINARY}} .
+    sources:
+      - "**/*.go"
+    generates:
+      - "{{.BINARY}}"
+
+  test:
+    desc: Run all tests with race detection
+    cmds:
+      - go test -race ./...
+
+  install:
+    desc: Install semrel to ~/.local/bin
+    deps: [build]
+    cmds:
+      - mkdir -p {{.INSTALL_DIR}}
+      - cp {{.BINARY}} {{.INSTALL_DIR}}/{{.BINARY}}
+      - echo "Installed {{.BINARY}} to {{.INSTALL_DIR}}"
+
+  completions:
+    desc: Generate and install shell completions
+    deps: [build]
+    cmds:
+      - task: completions:bash
+      - task: completions:zsh
+      - task: completions:fish
+
+  completions:bash:
+    desc: Install bash completions
+    deps: [build]
+    cmds:
+      - mkdir -p {{.BASH_COMPLETION_DIR}}
+      - ./{{.BINARY}} completion bash > {{.BASH_COMPLETION_DIR}}/{{.BINARY}}
+      - echo "Installed bash completion to {{.BASH_COMPLETION_DIR}}/{{.BINARY}}"
+
+  completions:zsh:
+    desc: Install zsh completions
+    deps: [build]
+    cmds:
+      - mkdir -p {{.ZSH_COMPLETION_DIR}}
+      - ./{{.BINARY}} completion zsh > {{.ZSH_COMPLETION_DIR}}/_{{.BINARY}}
+      - echo "Installed zsh completion to {{.ZSH_COMPLETION_DIR}}/_{{.BINARY}}"
+
+  completions:fish:
+    desc: Install fish completions
+    deps: [build]
+    cmds:
+      - mkdir -p {{.FISH_COMPLETION_DIR}}
+      - ./{{.BINARY}} completion fish > {{.FISH_COMPLETION_DIR}}/{{.BINARY}}.fish
+      - echo "Installed fish completion to {{.FISH_COMPLETION_DIR}}/{{.BINARY}}.fish"
+
+  install:all:
+    desc: Install semrel and all shell completions
+    cmds:
+      - task: install
+      - task: completions
+
+  clean:
+    desc: Remove built binary
+    cmds:
+      - rm -f {{.BINARY}}
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run

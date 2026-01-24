@@ -1,0 +1,85 @@
+name: Package Linux
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Download release artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          gh release download ${{ github.event.release.tag_name }} \
+            --pattern "semrel_${VERSION}_linux_${{ matrix.goarch }}.tar.gz"
+
+      - name: Extract binary and generate completions
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          mkdir -p dist completions
+          tar -xzf semrel_${VERSION}_linux_${{ matrix.goarch }}.tar.gz -C dist
+          # Generate completions (only needed once, but harmless to repeat)
+          ./dist/semrel completion bash > completions/semrel.bash
+          ./dist/semrel completion zsh > completions/semrel.zsh
+          ./dist/semrel completion fish > completions/semrel.fish
+
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
+      - name: Build packages
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          nfpm pkg -f packaging/nfpm.yaml -p deb -t .
+          nfpm pkg -f packaging/nfpm.yaml -p rpm -t .
+
+      - name: Upload packages to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.deb
+            *.rpm
+
+  cloudsmith:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download deb/rpm from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download ${{ github.event.release.tag_name }} \
+            --pattern "*.deb" --pattern "*.rpm"
+
+      - name: Install Cloudsmith CLI
+        run: pip install cloudsmith-cli
+
+      - name: Upload to Cloudsmith
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+        run: |
+          for deb in *.deb; do
+            cloudsmith push deb greatliontech/semrel/any-distro/any-version "$deb"
+          done
+          for rpm in *.rpm; do
+            cloudsmith push rpm greatliontech/semrel/any-distro/any-version "$rpm"
+          done

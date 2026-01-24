@@ -1,0 +1,25 @@
+# Maintainer: Great Lion Tech <info@greatlion.tech>
+pkgname=semrel-bin
+pkgver=VERSION
+pkgrel=1
+pkgdesc="Semantic Versioning and Conventional Commits release utility (pre-built binary)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/greatliontech/semrel"
+license=('Apache-2.0')
+depends=('glibc')
+provides=('semrel')
+conflicts=('semrel')
+source_x86_64=("https://github.com/greatliontech/semrel/releases/download/v$pkgver/semrel_${pkgver}_linux_amd64.tar.gz")
+source_aarch64=("https://github.com/greatliontech/semrel/releases/download/v$pkgver/semrel_${pkgver}_linux_arm64.tar.gz")
+sha256sums_x86_64=('CHECKSUM')
+sha256sums_aarch64=('CHECKSUM')
+
+package() {
+    install -Dm755 semrel "$pkgdir/usr/bin/semrel"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    # Completions
+    ./semrel completion bash | install -Dm644 /dev/stdin "$pkgdir/usr/share/bash-completion/completions/semrel"
+    ./semrel completion zsh | install -Dm644 /dev/stdin "$pkgdir/usr/share/zsh/site-functions/_semrel"
+    ./semrel completion fish | install -Dm644 /dev/stdin "$pkgdir/usr/share/fish/vendor_completions.d/semrel.fish"
+}

@@ -1,0 +1,52 @@
+name: Docker
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  packages: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Download release artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          gh release download ${{ github.event.release.tag_name }} \
+            --pattern "semrel_${VERSION}_linux_amd64.tar.gz"
+          mkdir -p dist
+          tar -xzf semrel_${VERSION}_linux_amd64.tar.gz -C dist
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          docker build \
+            --label org.opencontainers.image.title=semrel \
+            --label org.opencontainers.image.version=${VERSION} \
+            --label org.opencontainers.image.source=https://github.com/greatliontech/semrel \
+            --label org.opencontainers.image.licenses=Apache-2.0 \
+            -t ghcr.io/greatliontech/semrel:v${VERSION} \
+            -t ghcr.io/greatliontech/semrel:latest \
+            .
+          docker push ghcr.io/greatliontech/semrel:v${VERSION}
+          docker push ghcr.io/greatliontech/semrel:latest

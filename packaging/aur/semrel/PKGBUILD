@@ -1,0 +1,29 @@
+# Maintainer: Great Lion Tech <info@greatlion.tech>
+pkgname=semrel
+pkgver=VERSION
+pkgrel=1
+pkgdesc="Semantic Versioning and Conventional Commits release utility"
+arch=('x86_64' 'aarch64')
+url="https://github.com/greatliontech/semrel"
+license=('Apache-2.0')
+depends=('glibc')
+makedepends=('go')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/greatliontech/semrel/archive/v$pkgver.tar.gz")
+sha256sums=('CHECKSUM')
+
+build() {
+    cd "$pkgname-$pkgver"
+    export CGO_ENABLED=0
+    go build -ldflags="-s -w -X main.version=$pkgver" -o $pkgname .
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    install -Dm755 $pkgname "$pkgdir/usr/bin/$pkgname"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    # Completions
+    ./$pkgname completion bash | install -Dm644 /dev/stdin "$pkgdir/usr/share/bash-completion/completions/$pkgname"
+    ./$pkgname completion zsh | install -Dm644 /dev/stdin "$pkgdir/usr/share/zsh/site-functions/_$pkgname"
+    ./$pkgname completion fish | install -Dm644 /dev/stdin "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
+}

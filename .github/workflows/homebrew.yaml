@@ -1,0 +1,60 @@
+name: Homebrew
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  homebrew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          gh release download ${{ github.event.release.tag_name }} \
+            --pattern "semrel_${VERSION}_darwin_*.tar.gz" \
+            --pattern "semrel_${VERSION}_linux_*.tar.gz"
+
+      - name: Calculate checksums
+        id: checksums
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          echo "DARWIN_ARM64=$(sha256sum semrel_${VERSION}_darwin_arm64.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "DARWIN_AMD64=$(sha256sum semrel_${VERSION}_darwin_amd64.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "LINUX_ARM64=$(sha256sum semrel_${VERSION}_linux_arm64.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "LINUX_AMD64=$(sha256sum semrel_${VERSION}_linux_amd64.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Update Homebrew tap
+        env:
+          GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/greatliontech/homebrew-tap.git tap
+          cd tap
+
+          mkdir -p Formula
+          cp ../packaging/brew/semrel.rb Formula/semrel.rb
+
+          sed -i "s/version \"VERSION\"/version \"${VERSION}\"/" Formula/semrel.rb
+          sed -i "s/CHECKSUM_DARWIN_ARM64/${{ steps.checksums.outputs.DARWIN_ARM64 }}/" Formula/semrel.rb
+          sed -i "s/CHECKSUM_DARWIN_AMD64/${{ steps.checksums.outputs.DARWIN_AMD64 }}/" Formula/semrel.rb
+          sed -i "s/CHECKSUM_LINUX_ARM64/${{ steps.checksums.outputs.LINUX_ARM64 }}/" Formula/semrel.rb
+          sed -i "s/CHECKSUM_LINUX_AMD64/${{ steps.checksums.outputs.LINUX_AMD64 }}/" Formula/semrel.rb
+
+          git config user.name "greatbot"
+          git config user.email "bot@greatlion.tech"
+          git add .
+          git commit -m "Update semrel to v${VERSION}" || exit 0
+          git push

@@ -1,0 +1,25 @@
+name: semrel
+arch: "${GOARCH}"
+version: "${VERSION}"
+maintainer: "Great Lion Tech <info@greatlion.tech>"
+description: "Semantic Versioning and Conventional Commits release utility"
+homepage: "https://github.com/greatliontech/semrel"
+license: "Apache-2.0"
+
+contents:
+  - src: ./dist/semrel
+    dst: /usr/bin/semrel
+  - src: ./completions/semrel.bash
+    dst: /usr/share/bash-completion/completions/semrel
+  - src: ./completions/semrel.zsh
+    dst: /usr/share/zsh/site-functions/_semrel
+  - src: ./completions/semrel.fish
+    dst: /usr/share/fish/vendor_completions.d/semrel.fish
+  - src: ./LICENSE
+    dst: /usr/share/licenses/semrel/LICENSE
+
+deb:
+  compression: xz
+
+rpm:
+  compression: xz

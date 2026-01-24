@@ -1,0 +1,74 @@
+name: AUR
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  aur:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Download Linux artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          gh release download ${{ github.event.release.tag_name }} \
+            --pattern "semrel_${VERSION}_linux_*.tar.gz"
+
+      - name: Calculate checksums
+        id: checksums
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+
+          # Source tarball checksum (from GitHub)
+          SOURCE_CHECKSUM=$(curl -sL "https://github.com/greatliontech/semrel/archive/v${VERSION}.tar.gz" | sha256sum | cut -d' ' -f1)
+          echo "SOURCE_CHECKSUM=${SOURCE_CHECKSUM}" >> $GITHUB_OUTPUT
+
+          # Binary checksums
+          AMD64_CHECKSUM=$(sha256sum semrel_${VERSION}_linux_amd64.tar.gz | cut -d' ' -f1)
+          ARM64_CHECKSUM=$(sha256sum semrel_${VERSION}_linux_arm64.tar.gz | cut -d' ' -f1)
+          echo "AMD64_CHECKSUM=${AMD64_CHECKSUM}" >> $GITHUB_OUTPUT
+          echo "ARM64_CHECKSUM=${ARM64_CHECKSUM}" >> $GITHUB_OUTPUT
+
+      - name: Update source PKGBUILD
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          sed -i "s/pkgver=VERSION/pkgver=${VERSION}/" packaging/aur/semrel/PKGBUILD
+          sed -i "s/sha256sums=('CHECKSUM')/sha256sums=('${{ steps.checksums.outputs.SOURCE_CHECKSUM }}')/" packaging/aur/semrel/PKGBUILD
+
+      - name: Update binary PKGBUILD
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          sed -i "s/pkgver=VERSION/pkgver=${VERSION}/" packaging/aur/semrel-bin/PKGBUILD
+          sed -i "s/sha256sums_x86_64=('CHECKSUM')/sha256sums_x86_64=('${{ steps.checksums.outputs.AMD64_CHECKSUM }}')/" packaging/aur/semrel-bin/PKGBUILD
+          sed -i "s/sha256sums_aarch64=('CHECKSUM')/sha256sums_aarch64=('${{ steps.checksums.outputs.ARM64_CHECKSUM }}')/" packaging/aur/semrel-bin/PKGBUILD
+
+      - name: Publish semrel to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
+        with:
+          pkgname: semrel
+          pkgbuild: ./packaging/aur/semrel/PKGBUILD
+          commit_username: greatbot
+          commit_email: bot@greatlion.tech
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to ${{ steps.version.outputs.VERSION }}"
+
+      - name: Publish semrel-bin to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
+        with:
+          pkgname: semrel-bin
+          pkgbuild: ./packaging/aur/semrel-bin/PKGBUILD
+          commit_username: greatbot
+          commit_email: bot@greatlion.tech
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to ${{ steps.version.outputs.VERSION }}"
