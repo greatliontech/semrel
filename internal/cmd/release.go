@@ -23,6 +23,7 @@ type releaseCommand struct {
 	build             string
 	currentBranchOnly bool
 	jsonOutput        bool
+	notesOnly         bool
 }
 
 type ReleaseOutput struct {
@@ -47,6 +48,7 @@ func newReleaseCommand(repo *repository.Repo, cfg *semrel.Config, root *rootComm
 	cmd.Flags().StringVarP(&c.build, "build", "b", "", "build version")
 	cmd.Flags().BoolVarP(&c.currentBranchOnly, "current-branch-only", "", false, "only tags from the current branch")
 	cmd.Flags().BoolVar(&c.jsonOutput, "json", false, "output in JSON format")
+	cmd.Flags().BoolVar(&c.notesOnly, "notes-only", false, "output release notes only, do not create release")
 	c.cmd = cmd
 	return c
 }
@@ -140,6 +142,12 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	notes := release.GenerateReleaseNotes(commits, filters, rules)
+
+	// Handle notes-only mode
+	if r.notesOnly {
+		fmt.Print(notes)
+		return nil
+	}
 
 	platform, tok, proj, err := release.DetectPlatform()
 	// only one type of error here, release.ErrPlatformDetectionFailed
