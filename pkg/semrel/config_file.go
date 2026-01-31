@@ -19,6 +19,9 @@ type MatchRule struct {
 
 // ConfigFile is the configuration file for the semantic release tool in YAML format
 type ConfigFile struct {
+	// Version of the configuration file format
+	Version string `yaml:"version" json:"version"`
+
 	// The default bump type if no commit types match. Default is "none"
 	DefaultBump string `yaml:"defaultBump" json:"defaultBump" enum:"none,patch,minor,major" default:"none"`
 

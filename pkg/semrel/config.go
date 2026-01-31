@@ -10,12 +10,19 @@ import (
 type ConfigOption func(*Config)
 
 var DefaultConfig = &Config{
+	version:        ConfigVersionV0,
 	defaultBump:    BumpNone,
 	patchTypes:     mapset.NewSet("fix"),
 	minorTypes:     mapset.NewSet("feat"),
 	majorTypes:     mapset.NewSet[string](),
 	initialVersion: semver.New(1, 0, 0, "", ""),
 	devMajorBump:   BumpPatch,
+}
+
+func WithVersion(v ConfigVersion) ConfigOption {
+	return func(c *Config) {
+		c.version = v
+	}
 }
 
 func WithDefaultBump(b BumpKind) ConfigOption {
@@ -97,6 +104,7 @@ func WithFilters(filters *Filters) ConfigOption {
 }
 
 type Config struct {
+	version        ConfigVersion
 	patchTypes     mapset.Set[string]
 	minorTypes     mapset.Set[string]
 	majorTypes     mapset.Set[string]
@@ -110,6 +118,10 @@ type Config struct {
 	platform       string
 	matchRules     []MatchRule
 	filters        *Filters
+}
+
+func (c *Config) Version() ConfigVersion {
+	return c.version
 }
 
 func (c *Config) DefaultBump() BumpKind {
@@ -199,6 +211,12 @@ func NewConfig(opts ...ConfigOption) (*Config, error) {
 
 func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 	opts := []ConfigOption{}
+
+	ver, err := NewConfigVersion(cf.Version)
+	if err != nil {
+		return nil, err
+	}
+	opts = append(opts, WithVersion(ver))
 
 	if defBump := cf.DefaultBump; defBump != "" {
 		bump, err := NewBump(defBump)

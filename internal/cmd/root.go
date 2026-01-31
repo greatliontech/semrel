@@ -65,6 +65,7 @@ func New(rp *repository.Repo, cfg *semrel.Config, ver string) (*rootCommand, err
 		newValidateCommand().cmd,
 		newReleaseCommand(rp, cfg, c).cmd,
 		newMCPCommand(rp, cfg, ver).cmd,
+		newInitCommand(rp).cmd,
 	)
 	c.cmd = cmd
 	return c, nil

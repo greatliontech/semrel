@@ -181,3 +181,43 @@ func expectedTypesMatch(expected, actual []string) bool {
 	}
 	return true
 }
+
+func TestVersionDefaultsToV0(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   string
+		expected ConfigVersion
+	}{
+		{
+			name:     "empty config",
+			config:   "",
+			expected: ConfigVersionV0,
+		},
+		{
+			name:     "config without version",
+			config:   "patchTypes:\n  - fix\n",
+			expected: ConfigVersionV0,
+		},
+		{
+			name:     "config with explicit version",
+			config:   "version: v0\n",
+			expected: ConfigVersionV0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cf, err := ConfigFileFromBytes([]byte(tt.config))
+			if err != nil {
+				t.Fatalf("unexpected error parsing config file: %v", err)
+			}
+			c, err := NewConfigFromConfigFile(cf)
+			if err != nil {
+				t.Fatalf("unexpected error creating config: %v", err)
+			}
+			if c.Version() != tt.expected {
+				t.Errorf("expected version %q, got %q", tt.expected, c.Version())
+			}
+		})
+	}
+}
