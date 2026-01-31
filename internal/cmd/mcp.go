@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/greatliontech/semrel/internal/repository"
@@ -53,6 +56,11 @@ func (c *mcpCommand) runE(cmd *cobra.Command, args []string) error {
 		Name:        "next_version",
 		Description: "Calculate the next semantic version based on conventional commits since the last release",
 	}, c.handleNextVersion)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "init",
+		Description: "Initialize a new .semrel.yaml configuration file in the repository root",
+	}, c.handleInit)
 
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		log.Fatal(err)
@@ -156,4 +164,51 @@ func (c *mcpCommand) handleNextVersion(ctx context.Context, req *mcp.CallToolReq
 	}
 
 	return &mcp.CallToolResult{}, result, nil
+}
+
+// InitArgs are the arguments for the init tool.
+type InitArgs struct {
+	// Development enables development mode (0.x.x versions, breaking changes as minor)
+	Development bool `json:"development,omitempty"`
+	// Prefix is the version prefix (e.g., 'v' for v1.0.0)
+	Prefix string `json:"prefix,omitempty"`
+	// Full generates a full commented config with all options
+	Full bool `json:"full,omitempty"`
+	// Force overwrites an existing config file
+	Force bool `json:"force,omitempty"`
+}
+
+// InitResult is the result of the init tool.
+type InitResult struct {
+	Path    string `json:"path"`
+	Created bool   `json:"created"`
+	Message string `json:"message"`
+}
+
+func (c *mcpCommand) handleInit(ctx context.Context, req *mcp.CallToolRequest, args InitArgs) (*mcp.CallToolResult, *InitResult, error) {
+	configPath := filepath.Join(c.repo.Root(), configFileName)
+
+	// Check if file already exists
+	if _, err := os.Stat(configPath); err == nil {
+		if !args.Force {
+			return &mcp.CallToolResult{}, &InitResult{
+				Path:    configPath,
+				Created: false,
+				Message: fmt.Sprintf("config file already exists: %s (use force: true to overwrite)", configPath),
+			}, nil
+		}
+	}
+
+	config := buildInitConfig(args.Development, args.Prefix, args.Full)
+
+	// Write the config file
+	if err := os.WriteFile(configPath, []byte(config), 0644); err != nil {
+		return nil, nil, fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	return &mcp.CallToolResult{}, &InitResult{
+		Path:    configPath,
+		Created: true,
+		Message: fmt.Sprintf("created %s", configPath),
+	}, nil
 }

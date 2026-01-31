@@ -100,7 +100,7 @@ func (c *initCommand) runE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	config := c.buildConfig()
+	config := buildInitConfig(c.development, c.prefix, c.full)
 
 	// Write the config file
 	if err := os.WriteFile(configPath, []byte(config), 0644); err != nil {
@@ -111,8 +111,8 @@ func (c *initCommand) runE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *initCommand) buildConfig() string {
-	if c.full {
+func buildInitConfig(development bool, prefix string, full bool) string {
+	if full {
 		return fullConfig
 	}
 
@@ -120,12 +120,12 @@ func (c *initCommand) buildConfig() string {
 	b.WriteString(schemaComment)
 	b.WriteString("\nversion: v0\n")
 
-	if c.development {
+	if development {
 		b.WriteString("development: true\n")
 	}
 
-	if c.prefix != "" {
-		b.WriteString(fmt.Sprintf("prefix: %q\n", c.prefix))
+	if prefix != "" {
+		b.WriteString(fmt.Sprintf("prefix: %q\n", prefix))
 	}
 
 	return b.String()
