@@ -71,6 +71,9 @@ type initCommand struct {
 	development bool
 	prefix      string
 	full        bool
+	patchTypes  []string
+	minorTypes  []string
+	majorTypes  []string
 }
 
 func newInitCommand(repo *repository.Repo) *initCommand {
@@ -86,6 +89,9 @@ func newInitCommand(repo *repository.Repo) *initCommand {
 	cmd.Flags().BoolVarP(&c.development, "development", "d", false, "enable development mode (0.x.x versions)")
 	cmd.Flags().StringVarP(&c.prefix, "prefix", "p", "", "version prefix (e.g., 'v')")
 	cmd.Flags().BoolVar(&c.full, "full", false, "generate full commented config with all options")
+	cmd.Flags().StringSliceVar(&c.patchTypes, "patch", nil, "commit types for patch bumps (e.g., --patch fix,chore)")
+	cmd.Flags().StringSliceVar(&c.minorTypes, "minor", nil, "commit types for minor bumps (e.g., --minor feat)")
+	cmd.Flags().StringSliceVar(&c.majorTypes, "major", nil, "commit types for major bumps (e.g., --major breaking)")
 	c.cmd = cmd
 	return c
 }
@@ -100,7 +106,15 @@ func (c *initCommand) runE(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	config := buildInitConfig(c.development, c.prefix, c.full)
+	opts := initConfigOpts{
+		Development: c.development,
+		Prefix:      c.prefix,
+		Full:        c.full,
+		PatchTypes:  c.patchTypes,
+		MinorTypes:  c.minorTypes,
+		MajorTypes:  c.majorTypes,
+	}
+	config := buildInitConfig(opts)
 
 	// Write the config file
 	if err := os.WriteFile(configPath, []byte(config), 0644); err != nil {
@@ -111,8 +125,17 @@ func (c *initCommand) runE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func buildInitConfig(development bool, prefix string, full bool) string {
-	if full {
+type initConfigOpts struct {
+	Development bool
+	Prefix      string
+	Full        bool
+	PatchTypes  []string
+	MinorTypes  []string
+	MajorTypes  []string
+}
+
+func buildInitConfig(opts initConfigOpts) string {
+	if opts.Full {
 		return fullConfig
 	}
 
@@ -120,12 +143,33 @@ func buildInitConfig(development bool, prefix string, full bool) string {
 	b.WriteString(schemaComment)
 	b.WriteString("\nversion: v0\n")
 
-	if development {
+	if len(opts.PatchTypes) > 0 {
+		b.WriteString("patchTypes:\n")
+		for _, t := range opts.PatchTypes {
+			b.WriteString(fmt.Sprintf("  - %s\n", t))
+		}
+	}
+
+	if len(opts.MinorTypes) > 0 {
+		b.WriteString("minorTypes:\n")
+		for _, t := range opts.MinorTypes {
+			b.WriteString(fmt.Sprintf("  - %s\n", t))
+		}
+	}
+
+	if len(opts.MajorTypes) > 0 {
+		b.WriteString("majorTypes:\n")
+		for _, t := range opts.MajorTypes {
+			b.WriteString(fmt.Sprintf("  - %s\n", t))
+		}
+	}
+
+	if opts.Development {
 		b.WriteString("development: true\n")
 	}
 
-	if prefix != "" {
-		b.WriteString(fmt.Sprintf("prefix: %q\n", prefix))
+	if opts.Prefix != "" {
+		b.WriteString(fmt.Sprintf("prefix: %q\n", opts.Prefix))
 	}
 
 	return b.String()

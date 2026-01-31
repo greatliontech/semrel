@@ -176,6 +176,12 @@ type InitArgs struct {
 	Full bool `json:"full,omitempty"`
 	// Force overwrites an existing config file
 	Force bool `json:"force,omitempty"`
+	// PatchTypes are commit types that trigger patch bumps
+	PatchTypes []string `json:"patch_types,omitempty"`
+	// MinorTypes are commit types that trigger minor bumps
+	MinorTypes []string `json:"minor_types,omitempty"`
+	// MajorTypes are commit types that trigger major bumps
+	MajorTypes []string `json:"major_types,omitempty"`
 }
 
 // InitResult is the result of the init tool.
@@ -199,7 +205,15 @@ func (c *mcpCommand) handleInit(ctx context.Context, req *mcp.CallToolRequest, a
 		}
 	}
 
-	config := buildInitConfig(args.Development, args.Prefix, args.Full)
+	opts := initConfigOpts{
+		Development: args.Development,
+		Prefix:      args.Prefix,
+		Full:        args.Full,
+		PatchTypes:  args.PatchTypes,
+		MinorTypes:  args.MinorTypes,
+		MajorTypes:  args.MajorTypes,
+	}
+	config := buildInitConfig(opts)
 
 	// Write the config file
 	if err := os.WriteFile(configPath, []byte(config), 0644); err != nil {
