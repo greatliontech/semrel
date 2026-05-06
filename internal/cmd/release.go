@@ -61,7 +61,7 @@ func (r *releaseCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	// get latest tag version
-	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
+	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly, r.cfg.StableOnly())
 	if err != nil {
 		return err
 	}

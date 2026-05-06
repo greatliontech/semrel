@@ -54,6 +54,9 @@ type ConfigFile struct {
 
 	// Filters are used to exclude certain commit types and scopes from release notes
 	Filters *Filters `yaml:"filters"`
+
+	// StableOnly if true, pre-release tags are ignored when determining the current version
+	StableOnly bool `yaml:"stableOnly" json:"stableOnly"`
 }
 
 func ConfigFileFromPath(path string) (*ConfigFile, error) {

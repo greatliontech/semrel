@@ -61,7 +61,7 @@ func New(rp *repository.Repo, cfg *semrel.Config, ver string) (*rootCommand, err
 	cmd.MarkFlagsMutuallyExclusive("auth-password", "auth-token")
 	cmd.AddCommand(
 		newCurrentCommand(rp, cfg).cmd,
-		newCompareCommand(rp).cmd,
+		newCompareCommand(rp, cfg).cmd,
 		newValidateCommand().cmd,
 		newReleaseCommand(rp, cfg, c).cmd,
 		newMCPCommand(rp, cfg, ver).cmd,
@@ -117,7 +117,7 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	}
 
 	// get latest tag version
-	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly)
+	current, ref, err := r.repo.CurrentVersion(r.currentBranchOnly, r.cfg.StableOnly())
 	if err != nil {
 		return err
 	}

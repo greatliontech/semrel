@@ -39,7 +39,7 @@ func newCurrentCommand(repo *repository.Repo, cfg *semrel.Config) *currentComman
 }
 
 func (c *currentCommand) runE(cmd *cobra.Command, args []string) error {
-	cv, _, err := c.repo.CurrentVersion(c.currentBranchOnly)
+	cv, _, err := c.repo.CurrentVersion(c.currentBranchOnly, c.cfg.StableOnly())
 	if err != nil {
 		return err
 	}
