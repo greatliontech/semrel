@@ -119,7 +119,7 @@ func TestCurrentVersionWithMultipleTags(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := New(r, "/tmp/test")
-	ver, ref, err := repo.CurrentVersion(false)
+	ver, ref, err := repo.CurrentVersion(false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestCurrentVersionWithNonSemverTags(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := New(r, "/tmp/test")
-	ver, _, err := repo.CurrentVersion(false)
+	ver, _, err := repo.CurrentVersion(false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +162,7 @@ func TestCurrentVersionEmptyRepo(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := New(r, "/tmp/test")
-	ver, ref, err := repo.CurrentVersion(false)
+	ver, ref, err := repo.CurrentVersion(false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,12 +186,41 @@ func TestCurrentVersionSortsCorrectly(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := New(r, "/tmp/test")
-	ver, _, err := repo.CurrentVersion(false)
+	ver, _, err := repo.CurrentVersion(false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if ver.String() != "2.0.0" {
 		t.Errorf("expected version 2.0.0, got %s", ver.String())
+	}
+}
+
+func TestCurrentVersionStableOnly(t *testing.T) {
+	commitMessages := []testCommit{
+		{msg: "initial", tag: "v1.0.0"},
+		{msg: "feat: new feature", tag: "v1.1.0-beta"},
+		{msg: "fix: patch", tag: "v1.1.0-rc.1"},
+	}
+	r, err := testRepo(commitMessages)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(r, "/tmp/test")
+
+	ver, _, err := repo.CurrentVersion(false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "1.0.0" {
+		t.Errorf("expected stable version 1.0.0, got %s", ver.String())
+	}
+
+	ver, _, err = repo.CurrentVersion(false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ver.String() != "1.1.0-rc.1" {
+		t.Errorf("expected pre-release version 1.1.0-rc.1, got %s", ver.String())
 	}
 }
 
@@ -232,7 +261,7 @@ func TestCreateTag(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ver, _, err := repo.CurrentVersion(false)
+	ver, _, err := repo.CurrentVersion(false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
