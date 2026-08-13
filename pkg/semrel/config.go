@@ -103,6 +103,12 @@ func WithFilters(filters *Filters) ConfigOption {
 	}
 }
 
+func WithStableOnly() ConfigOption {
+	return func(c *Config) {
+		c.stableOnly = true
+	}
+}
+
 type Config struct {
 	version        ConfigVersion
 	patchTypes     mapset.Set[string]
@@ -118,6 +124,7 @@ type Config struct {
 	platform       string
 	matchRules     []MatchRule
 	filters        *Filters
+	stableOnly     bool
 }
 
 func (c *Config) Version() ConfigVersion {
@@ -183,6 +190,10 @@ func (c *Config) MinorTypes() []string {
 
 func (c *Config) MajorTypes() []string {
 	return c.majorTypes.ToSlice()
+}
+
+func (c *Config) StableOnly() bool {
+	return c.stableOnly
 }
 
 func NewConfig(opts ...ConfigOption) (*Config, error) {
@@ -278,6 +289,10 @@ func NewConfigFromConfigFile(cf *ConfigFile) (*Config, error) {
 
 	if cf.Filters != nil {
 		opts = append(opts, WithFilters(cf.Filters))
+	}
+
+	if cf.StableOnly {
+		opts = append(opts, WithStableOnly())
 	}
 
 	return NewConfig(opts...)

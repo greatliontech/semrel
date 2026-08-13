@@ -100,7 +100,7 @@ type CurrentVersionResult struct {
 }
 
 func (c *mcpCommand) handleCurrentVersion(ctx context.Context, req *mcp.CallToolRequest, args CurrentVersionArgs) (*mcp.CallToolResult, *CurrentVersionResult, error) {
-	ver, _, err := c.repo.CurrentVersion(false)
+	ver, _, err := c.repo.CurrentVersion(false, c.cfg.StableOnly())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -123,7 +123,7 @@ type NextVersionResult struct {
 }
 
 func (c *mcpCommand) handleNextVersion(ctx context.Context, req *mcp.CallToolRequest, args NextVersionArgs) (*mcp.CallToolResult, *NextVersionResult, error) {
-	currentVer, ref, err := c.repo.CurrentVersion(false)
+	currentVer, ref, err := c.repo.CurrentVersion(false, c.cfg.StableOnly())
 	if err != nil {
 		return nil, nil, err
 	}

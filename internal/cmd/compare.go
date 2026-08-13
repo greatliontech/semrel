@@ -7,12 +7,14 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/greatliontech/semrel/internal/repository"
+	"github.com/greatliontech/semrel/pkg/semrel"
 	"github.com/spf13/cobra"
 )
 
 type compareCommand struct {
 	cmd               *cobra.Command
 	repo              *repository.Repo
+	cfg               *semrel.Config
 	le                []string
 	ge                []string
 	lt                []string
@@ -26,9 +28,10 @@ type CompareOutput struct {
 	Result  bool   `json:"result"`
 }
 
-func newCompareCommand(repo *repository.Repo) *compareCommand {
+func newCompareCommand(repo *repository.Repo, cfg *semrel.Config) *compareCommand {
 	c := &compareCommand{
 		repo: repo,
+		cfg:  cfg,
 	}
 	cmd := &cobra.Command{
 		Use:   "compare",
@@ -52,7 +55,7 @@ func (c *compareCommand) runE(cmd *cobra.Command, args []string) error {
 	var current *semver.Version
 	var err error
 	if len(args) == 0 {
-		current, _, err = c.repo.CurrentVersion(c.currentBranchOnly)
+		current, _, err = c.repo.CurrentVersion(c.currentBranchOnly, c.cfg.StableOnly())
 	} else {
 		current, err = semver.NewVersion(args[0])
 	}

@@ -103,7 +103,7 @@ type versionReference struct {
 	ref *plumbing.Reference
 }
 
-func (r *Repo) CurrentVersion(currentBranchOnly bool) (*semver.Version, *plumbing.Reference, error) {
+func (r *Repo) CurrentVersion(currentBranchOnly bool, stableOnly bool) (*semver.Version, *plumbing.Reference, error) {
 	currentBranchRefs := mapset.NewSet[plumbing.Hash]()
 
 	if currentBranchOnly {
@@ -142,6 +142,9 @@ func (r *Repo) CurrentVersion(currentBranchOnly bool) (*semver.Version, *plumbin
 		}
 		ver, err := semver.NewVersion(ref.Name().Short())
 		if err == nil {
+			if stableOnly && ver.Prerelease() != "" {
+				return nil
+			}
 			versions = append(versions, versionReference{ver: ver, ref: ref})
 		}
 		return nil
